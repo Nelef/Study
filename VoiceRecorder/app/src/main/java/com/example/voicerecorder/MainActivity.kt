@@ -43,8 +43,6 @@ class MainActivity : AppCompatActivity() {
         }
 
         binding.buttonStartRecording.setOnClickListener {
-            mediaRecorder = MediaRecorder()
-
             mediaRecorder = MediaRecorder().apply {
                 setAudioSource(MediaRecorder.AudioSource.MIC)
                 setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
