@@ -6,12 +6,20 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Intent
 import android.graphics.Color
+import android.media.MediaRecorder
 import android.os.Build
+import android.os.Environment
 import android.os.IBinder
 import android.util.Log
+import android.widget.Toast
 import androidx.core.app.NotificationCompat
 
 class MyService : Service() {
+    private var mediaRecorder: MediaRecorder? = null
+    var state = false
+    var recordingStopped = false
+
+    val output = "${Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)}" + "/test.mp3"
 
     override fun onBind(intent: Intent): IBinder {
         throw UnsupportedOperationException("Not yet implemented")
@@ -21,6 +29,21 @@ class MyService : Service() {
         super.onCreate()
         createNotification()
         mThread!!.start()
+        //test
+        mediaRecorder = MediaRecorder().apply {
+            setAudioSource(MediaRecorder.AudioSource.MIC)
+            setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+            setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+            setOutputFile(output) // 저장위치
+            prepare()
+        }
+
+        mediaRecorder?.start()
+
+        state = true
+
+        Toast.makeText(this, "녹음 시작", Toast.LENGTH_SHORT).show()
+        //test
         Log.d(TAG, "onCreate")
     }
 
@@ -93,6 +116,14 @@ class MyService : Service() {
         if (mThread != null) {
             mThread!!.interrupt()
             mThread = null
+        }
+        if(state){
+            mediaRecorder?.stop()
+            mediaRecorder?.release()
+
+            state = false
+
+            Toast.makeText(this, "녹음 중지", Toast.LENGTH_SHORT).show()
         }
         Log.d(TAG, "onDestroy")
     }
