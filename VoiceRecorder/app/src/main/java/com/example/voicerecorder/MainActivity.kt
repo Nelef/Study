@@ -1,6 +1,7 @@
 package com.example.voicerecorder
 
 import android.Manifest
+import android.content.Intent
 import android.media.MediaRecorder
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
@@ -12,9 +13,7 @@ import androidx.core.app.ActivityCompat
 import com.example.voicerecorder.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
-
     private lateinit var binding: ActivityMainBinding
-
     private var mediaRecorder: MediaRecorder? = null
 
     @RequiresApi(Build.VERSION_CODES.N)
@@ -31,15 +30,29 @@ class MainActivity : AppCompatActivity() {
         val permissions = arrayOf(Manifest.permission.RECORD_AUDIO, Manifest.permission.WRITE_EXTERNAL_STORAGE)
         ActivityCompat.requestPermissions(this, permissions,0)
 
+        binding.buttonStartService.setOnClickListener {
+            val serviceIntent = Intent(this@MainActivity, MyService::class.java)
+            startService(serviceIntent)
+            Toast.makeText(this@MainActivity, "Service start", Toast.LENGTH_SHORT).show()
+        }
+
+        binding.buttonStopService.setOnClickListener {
+            val serviceIntent = Intent(this@MainActivity, MyService::class.java)
+            stopService(serviceIntent)
+            Toast.makeText(this@MainActivity, "Service stop", Toast.LENGTH_SHORT).show()
+        }
+
         binding.buttonStartRecording.setOnClickListener {
             mediaRecorder = MediaRecorder()
 
-            mediaRecorder?.setAudioSource(MediaRecorder.AudioSource.MIC)
-            mediaRecorder?.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
-            mediaRecorder?.setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
-            mediaRecorder?.setOutputFile(output)
+            mediaRecorder = MediaRecorder().apply {
+                setAudioSource(MediaRecorder.AudioSource.MIC)
+                setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+                setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+                setOutputFile(output) // 저장위치
+                prepare()
+            }
 
-            mediaRecorder?.prepare()
             mediaRecorder?.start()
 
             state = true
@@ -61,7 +74,7 @@ class MainActivity : AppCompatActivity() {
         binding.buttonPauseRecording.setOnClickListener {
             if (state) {
                 if (!recordingStopped) {
-                    Toast.makeText(this, "녹음 정지", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "녹음 임시 정지", Toast.LENGTH_SHORT).show()
                     mediaRecorder?.pause()
                     recordingStopped = true
                     binding.buttonPauseRecording.text = "다시 시작"
