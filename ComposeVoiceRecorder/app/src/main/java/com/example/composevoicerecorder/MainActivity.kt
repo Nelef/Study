@@ -9,6 +9,7 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -28,6 +29,7 @@ import androidx.core.content.ContextCompat
 import com.example.composevoicerecorder.ui.theme.ComposeVoiceRecorderTheme
 
 private const val TAG = "MainActivity"
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -49,46 +51,52 @@ class MainActivity : ComponentActivity() {
 fun Buttons() {
     val context = LocalContext.current
     // 권한 요청
-    val launcher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { isGranted: Boolean ->
-        if (isGranted) {
-            // Permission Accepted: Do something
-            Log.d(TAG,"PERMISSION GRANTED")
+    lateinit var activityResultLauncher: ActivityResultLauncher<Array<String>>
+    activityResultLauncher =
+        rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
+            if (it.all { permission -> permission.value == true }) {
 
-        } else {
-            // Permission Denied: Do something
-            Log.d(TAG,"PERMISSION DENIED")
+            } else {
+                Toast.makeText(context, "권한 거부", Toast.LENGTH_SHORT).show()
+            }
         }
-    }
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.SpaceEvenly
     ) {
         Button(onClick = {
             // 권한 설정(마이크, 폴더접근)
-            val permissions = arrayOf(Manifest.permission.RECORD_AUDIO, Manifest.permission.WRITE_EXTERNAL_STORAGE)
-            for(permission in permissions) {
-                Log.d(TAG, "permission: $permission")
-                when (PackageManager.PERMISSION_GRANTED) {
-                    // permission 체크
-                    ContextCompat.checkSelfPermission(
-                        context,
-                        permission
-                    ) -> {
-                        // 권한 부여가 이미 됨.
-                        Log.d("ExampleScreen","Code requires permission")
-                    }
-                    else -> {
-                        // 권한 부여가 안되었다면 요청.
-                        launcher.launch(permission)
-                    }
+            val permissions = ArrayList<String>()
+            permissions.add(Manifest.permission.RECORD_AUDIO)
+            permissions.add(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+            val permissionRequest = ArrayList<String>()
+            // 권한이 부여되어 있는지 하나씩 체크
+            for (permission in permissions) {
+                Log.d(TAG, "권한 : $permission")
+                // 권한이 부여되어 있지 않다면
+                if (PackageManager.PERMISSION_GRANTED
+                    != ContextCompat.checkSelfPermission(context, permission)
+                ) {
+                    // 권한요청할 array 추가
+                    permissionRequest.add(permission)
+                }
+            }
+            when (permissionRequest.size) {
+                // permissionRequest 체크
+                0 -> {
+                    // 모든 권한 부여가 이미 됨.
+                    Log.d("ExampleScreen", "Code requires permission")
+                    val serviceIntent = Intent(context, RecordService::class.java)
+                    context.startService(serviceIntent)
+                    Toast.makeText(context, "Service start", Toast.LENGTH_SHORT).show()
+                }
+                else -> {
+                    // 권한 부여가 안되었다면 요청.
+                    activityResultLauncher.launch(permissionRequest.toArray(arrayOfNulls(permissionRequest.size)))
                 }
             }
 
-            val serviceIntent = Intent(context, RecordService::class.java)
-            context.startService(serviceIntent)
-            Toast.makeText(context, "Service start", Toast.LENGTH_SHORT).show()
         }, modifier = Modifier.wrapContentSize()) {
             Text(text = "서비스 시작")
         }
