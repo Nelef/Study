@@ -17,8 +17,6 @@ import androidx.core.app.NotificationCompat
 class MyService : Service() {
     private var mediaRecorder: MediaRecorder? = null
     var state = false
-    var recordingStopped = false
-
     val output = "${Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)}" + "/test.mp3"
 
     override fun onBind(intent: Intent): IBinder {
@@ -28,7 +26,6 @@ class MyService : Service() {
     override fun onCreate() {
         super.onCreate()
         createNotification()
-        mThread!!.start()
         //test
         mediaRecorder = MediaRecorder().apply {
             setAudioSource(MediaRecorder.AudioSource.MIC)
@@ -96,27 +93,8 @@ class MyService : Service() {
         startForeground(NOTI_ID, notification)
     }
 
-    private var mThread: Thread? = object : Thread("My Thread") {
-        override fun run() {
-            super.run()
-            for (i in 0..99) {
-                Log.d(TAG, "count : $i")
-                try {
-                    sleep(1000)
-                } catch (e: InterruptedException) {
-                    currentThread().interrupt()
-                    break
-                }
-            }
-        }
-    }
-
     override fun onDestroy() {
         super.onDestroy()
-        if (mThread != null) {
-            mThread!!.interrupt()
-            mThread = null
-        }
         if(state){
             mediaRecorder?.stop()
             mediaRecorder?.release()
