@@ -1,18 +1,27 @@
 package com.example.composevoicerecorder
 
+import android.Manifest
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
 import android.content.Intent
 import android.graphics.Color
+import android.media.MediaRecorder
 import android.os.Build
+import android.os.Environment
 import android.os.IBinder
 import android.util.Log
 import android.widget.Toast
 import androidx.core.app.NotificationCompat
 
 class RecordService : Service() {
+    // mediaRecorder 변수 생성
+    private var mediaRecorder: MediaRecorder? = null
+    // 현재상태 (녹음ON or 녹음OFF)
+    var state = false
+    // output 위치 설정 - download 폴더에 test.mp3로 저장.
+    val output = "${Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)}" + "/test.mp3"
 
     override fun onBind(intent: Intent): IBinder {
         TODO("Return the communication channel to the service.")
@@ -74,6 +83,35 @@ class RecordService : Service() {
         notificationManager.notify(NOTI_ID, builder.build()) // id : 정의해야하는 각 알림의 고유한 int값
         val notification = builder.build()
         startForeground(NOTI_ID, notification)
+    }
+
+    // 녹음 시작
+    fun StartRecording() {
+        mediaRecorder = MediaRecorder().apply {
+            setAudioSource(MediaRecorder.AudioSource.MIC)
+            setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+            setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+            setOutputFile(output) // 저장위치
+            prepare()
+        }
+
+        mediaRecorder?.start()
+
+        state = true
+
+        Toast.makeText(this, "녹음 시작", Toast.LENGTH_SHORT).show()
+    }
+
+    // 녹음 종료
+    fun stopRecording() {
+        if(state){
+            mediaRecorder?.stop()
+            mediaRecorder?.release()
+
+            state = false
+
+            Toast.makeText(this, "녹음 중지", Toast.LENGTH_SHORT).show()
+        }
     }
 
     companion object {
