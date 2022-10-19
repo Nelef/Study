@@ -30,11 +30,13 @@ class RecordService : Service() {
     override fun onCreate() {
         super.onCreate()
         createNotification()
+        startRecording()
         Log.d(TAG, "onCreate")
     }
 
     override fun onDestroy() {
         super.onDestroy()
+        stopRecording()
         Log.d(TAG, "onDestroy")
     }
 
@@ -86,7 +88,7 @@ class RecordService : Service() {
     }
 
     // 녹음 시작
-    fun StartRecording() {
+    private fun startRecording() {
         mediaRecorder = MediaRecorder().apply {
             setAudioSource(MediaRecorder.AudioSource.MIC)
             setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
@@ -103,7 +105,7 @@ class RecordService : Service() {
     }
 
     // 녹음 종료
-    fun stopRecording() {
+    private fun stopRecording() {
         if(state){
             mediaRecorder?.stop()
             mediaRecorder?.release()
