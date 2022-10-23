@@ -68,32 +68,35 @@ fun Buttons() {
         Button(onClick = {
             // 권한 설정(마이크, 폴더접근)
             val permissions = ArrayList<String>()
+            val permissionRequests = ArrayList<String>()
             permissions.add(Manifest.permission.RECORD_AUDIO)
             permissions.add(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-            val permissionRequest = ArrayList<String>()
             // 권한이 부여되어 있는지 하나씩 체크
             for (permission in permissions) {
-                Log.d(TAG, "권한 : $permission")
+                Log.d(TAG, "$permission : 권한체크")
                 // 권한이 부여되어 있지 않다면
                 if (PackageManager.PERMISSION_GRANTED
                     != ContextCompat.checkSelfPermission(context, permission)
                 ) {
                     // 권한요청할 array 추가
-                    permissionRequest.add(permission)
+                    Log.d(TAG, "$permission : 권한없음")
+                    permissionRequests.add(permission)
+                } else {
+                    Log.d(TAG, "$permission : 권한있음")
                 }
             }
-            when (permissionRequest.size) {
+            when (permissionRequests.size) {
                 // permissionRequest 체크
                 0 -> {
                     // 모든 권한 부여가 이미 됨.
-                    Log.d("ExampleScreen", "Code requires permission")
-                    val serviceIntent = Intent(context, RecordService::class.java)
-                    context.startService(serviceIntent)
+                    context.startService(Intent(context, RecordService::class.java))
                     Toast.makeText(context, "Service start", Toast.LENGTH_SHORT).show()
                 }
                 else -> {
                     // 권한 부여가 안되었다면 요청.
-                    activityResultLauncher.launch(permissionRequest.toArray(arrayOfNulls(permissionRequest.size)))
+                    activityResultLauncher.launch(
+                        permissionRequests.toArray(arrayOfNulls(permissionRequests.size))
+                    )
                 }
             }
 
