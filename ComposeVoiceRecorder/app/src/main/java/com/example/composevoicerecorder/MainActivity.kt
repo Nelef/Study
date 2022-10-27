@@ -15,11 +15,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.material.Button
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Surface
-import androidx.compose.material.Text
+import androidx.compose.material.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -63,8 +62,20 @@ fun Buttons() {
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.SpaceEvenly
+        verticalArrangement = Arrangement.Center
     ) {
+        var audioSamplingRateValue = remember { SharedPreference.prefs.setAudioSamplingRateValue }
+        var audioEncodingBitRateValue = remember { SharedPreference.prefs.setAudioEncodingBitRateValue }
+        Text(text = "샘플링 값 : $audioSamplingRateValue Hz")
+        TextField(
+            value = audioSamplingRateValue.toString(),
+            onValueChange = { audioSamplingRateValue = it }
+        )
+        Text(text = "샘플링 값 : $audioEncodingBitRateValue Hz")
+        TextField(
+            value = audioEncodingBitRateValue.toString(),
+            onValueChange = { audioEncodingBitRateValue = it }
+        )
         Button(onClick = {
             // 권한 설정(마이크, 폴더접근)
             val permissions = ArrayList<String>()
@@ -89,6 +100,8 @@ fun Buttons() {
                 // permissionRequest 체크
                 0 -> {
                     // 모든 권한 부여가 이미 됨.
+                    SharedPreference.prefs.setAudioSamplingRateValue = audioSamplingRateValue
+                    SharedPreference.prefs.setAudioEncodingBitRateValue = audioEncodingBitRateValue
                     context.startService(Intent(context, RecordService::class.java))
                     Toast.makeText(context, "Service start", Toast.LENGTH_SHORT).show()
                 }

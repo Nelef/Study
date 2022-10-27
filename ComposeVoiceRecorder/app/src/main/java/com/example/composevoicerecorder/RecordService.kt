@@ -1,6 +1,5 @@
 package com.example.composevoicerecorder
 
-import android.Manifest
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -14,14 +13,27 @@ import android.os.IBinder
 import android.util.Log
 import android.widget.Toast
 import androidx.core.app.NotificationCompat
+import java.text.SimpleDateFormat
+import java.util.*
 
-class RecordService : Service() {
+class RecordService: Service() {
     // mediaRecorder 변수 생성
     private var mediaRecorder: MediaRecorder? = null
+
     // 현재상태 (녹음ON or 녹음OFF)
     var state = false
+
+    // 현재시간
+    val utilDate = Date()
+    val formatType = SimpleDateFormat("yyyy-MM-dd HH-mm-ss")
+    val time = formatType.format(utilDate)
+
+    val setAudioSamplingRateValue = SharedPreference.prefs.setAudioSamplingRateValue.toString()
+    val setAudioEncodingBitRateValue = SharedPreference.prefs.setAudioEncodingBitRateValue.toString()
+
     // output 위치 설정 - download 폴더에 test.mp3로 저장.
-    val output = "${Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)}" + "/test.mp3"
+    val output =
+        "${Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)}" + "/$time ${setAudioSamplingRateValue}Hz ${setAudioEncodingBitRateValue}bps.m4a"
 
     override fun onBind(intent: Intent): IBinder {
         TODO("Return the communication channel to the service.")
@@ -91,6 +103,8 @@ class RecordService : Service() {
     private fun startRecording() {
         mediaRecorder = MediaRecorder().apply {
             setAudioSource(MediaRecorder.AudioSource.MIC)
+            setAudioSamplingRate(setAudioSamplingRateValue.toInt())
+            setAudioEncodingBitRate(setAudioEncodingBitRateValue.toInt())
             setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
             setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
             setOutputFile(output) // 저장위치
@@ -106,18 +120,23 @@ class RecordService : Service() {
 
     // 녹음 종료
     private fun stopRecording() {
-        if(state){
+        if (state) {
             mediaRecorder?.stop()
             mediaRecorder?.release()
 
             state = false
 
-            Toast.makeText(this, "녹음 중지", Toast.LENGTH_SHORT).show()
+            Toast.makeText(
+                this,
+                "다운로드 폴더 - /$time ${setAudioSamplingRateValue}Hz ${setAudioEncodingBitRateValue}bps.m4a \n 저장완료",
+                Toast.LENGTH_LONG
+            ).show()
         }
     }
 
     companion object {
         private const val TAG = "MyServiceTag"
+
         // Notification
         private const val NOTI_ID = 1
     }
