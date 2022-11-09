@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/port_nav_graph"
+    app:startDestination="@id/portraitEmptyFragment">
+
+    <fragment
+        android:id="@+id/portraitEmptyFragment"
+        android:name="com.inzisoft.ibks.view.fragment.PortraitEmptyFragment"
+        android:label="portraitEmptyFragment">
+
+        <action
+            android:id="@+id/action_portraitEmptyFragment_to_docCameraDialogFragment"
+            app:destination="@id/docCameraDialogFragment" />
+        <action
+            android:id="@+id/action_portraitEmptyFragment_to_previewDocDialogFragment"
+            app:destination="@id/previewDocDialogFragment" />
+    </fragment>
+
+    <dialog
+        android:id="@+id/docCameraDialogFragment"
+        android:name="com.inzisoft.ibks.view.dialog.DocCameraDialogFragment"
+        android:label="docCameraDialogFragment">
+
+        <argument
+            android:name="scriptFunName"
+            app:argType="string" />
+
+        <argument
+            android:name="docCameraData"
+            app:argType="com.inzisoft.ibks.data.web.DocCameraData" />
+
+        <action
+            android:id="@+id/action_docCameraDialogFragment_to_previewDocDialogFragment"
+            app:destination="@id/previewDocDialogFragment" />
+    </dialog>
+
+    <dialog
+        android:id="@+id/previewDocDialogFragment"
+        android:name="com.inzisoft.ibks.view.dialog.PreviewDocDialogFragment"
+        android:label="previewDocDialogFragment" >
+
+        <argument
+            android:name="scriptFunName"
+            app:argType="string" />
+
+        <argument
+            android:name="previewDocType"
+            app:argType="com.inzisoft.ibks.PreviewDocType" />
+
+        <argument
+            android:name="docInfoData"
+            app:argType="com.inzisoft.ibks.data.internal.DocInfoData" />
+    </dialog>
+
+</navigation>

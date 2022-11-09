@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+	<string name="zix_scanresult_title">Scan Result</string>
+	<string name="zix_scanresult_malware_count">Malware Count :&#160;</string>
+	<string name="zix_scanresult_delete_all">Delete All</string>
+	<string name="zix_scanresult_app">App :&#160;</string>
+	<string name="zix_scanresult_diag">Diagnosis :&#160;</string>
+	
+	<string name="zix_notification_running_title">System Protection</string>
+	<string name="zix_notification_running_content">System is protected.</string>
+	
+	<string name="zix_alert_dialog_title">Detect Malware</string>
+	<string name="zix_alert_dialog_message">Malware detected.\nDelete recommended.</string>
+	<string name="zix_alert_dialog_btn_possitive">OK</string>
+	<string name="zix_alert_dialog_btn_negative">Cancel</string>
+	
+	<string name="zix_splash_activity_sdk_end">SDK Service Finished</string>
+	<string name="zix_splash_activity_sdk_start">SDK Service Started</string>
+	<string name="zix_splash_activity_update_start">Update downloading&#8230;</string>
+	<string name="zix_splash_activity_update_finish">Update Completed</string>
+	<string name="zix_splash_activity_update_timeout">NetWork is not Stabilized</string>
+	<string name="zix_splash_activity_scan_start">Malware Scanning&#8230;</string>
+	<string name="zix_splash_activity_scan_finish">Malware Scan Completed</string>
+	<string name="zix_splash_activity_no_pattern">Need to Update</string>
+	<string name="zix_splash_activity_cloud_unstable_network">NetWork is not Stabilized</string>
+
+</resources>

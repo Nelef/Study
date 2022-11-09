@@ -1,0 +1,197 @@
+<resources>
+    <string name="app_name">IBKS</string>
+
+    <string name="splash_vaccine_processing_message">현재 악성코드, 해킹, 블랙앱 보안 검사를 진행 중 입니다. 잠시만 기다려 주세요.</string>
+    <string name="ibks_title_message">ODS 서비스</string>
+    <string name="yes">예</string>
+    <string name="no">아니오</string>
+    <string name="confirm">확인</string>
+    <string name="cancel">취소</string>
+    <string name="complete">완료</string>
+
+    <!-- 로그인 -->
+    <string name="login_notice_message">로그인은 카드사 가입 시 등록한 ID와\n패스워드 정보를 입력해 주세요.</string>
+    <string name="login_not_registered_id">등록되지 않은 아이디입니다.</string>
+    <string name="login_invalid_password">잘못된 비밀번호 입니다.</string>
+    <string name="login">로그인</string>
+    <string name="id">ID</string>
+    <string name="password">Password</string>
+    <string name="login_help_message">로그인 시 문제가 있나요?</string>
+    <string name="login_help_button">Qcard 고객센터 바로가기</string>
+
+    <string name="application">신청서</string>
+    <string name="documentary_evidence">증빙서류</string>
+    <string name="edit">수정</string>
+    <string name="delete">삭제</string>
+    <string name="cancel_write">작성취소</string>
+    <string name="complete_write">작성완료</string>
+    <string name="save_temp">임시저장</string>
+    <string name="submit">제출</string>
+    <string name="alert">알림</string>
+    <string name="agree">동의</string>
+    <string name="close">닫기</string>
+
+    <!-- APK 업데이트 -->
+    <string name="app_version_check">어플리케이션 버전 확인중&#8230;</string>
+    <string name="app_update_title">어플리케이션 업데이트 알림</string>
+    <string name="app_update_subtitle">새로운 버전의 어플리케이션이 있습니다.\n최신버전으로 업데이트 하세요.</string>
+    <string name="app_update_notice_title">확인하세요</string>
+    <string name="app_update_notice_item_1">• 새로운 버전의 어플리케이션 설치가 완료 될 때까지\n\t기기의 3G / LTE / 보안 Wi-Fi 연결을 하지 마세요.</string>
+    <string name="app_update_notice_item_2">• 기기의 저장 공간이 충분하지 확인하세요.</string>
+    <string name="app_update_check">버전 확인 중</string>
+    <string name="app_update_start">업데이트 하기</string>
+    <string name="app_update_ing">업데이트 중 (%d/%d)</string>
+    <string name="app_update_error_storage">기기의 저장 공간이 충분하지 않습니다.\n저장 공간 확인 후 다시 시도해 주십시오.\n(최소 저장 공간 200MB 필요)</string>
+    <string name="app_update_error_server">서버로부터 응답이 없습니다.</string>
+
+    <!-- 서식 업데이트 -->
+    <string name="form_version_check">서식 버전 확인중&#8230;</string>
+    <string name="form_update_title">서식 업데이트 알림</string>
+    <string name="form_update_subtitle">새로운 서식으로 자동 업데이트 합니다.</string>
+    <string name="form_update_notice_title">확인하세요</string>
+    <string name="form_update_notice_item_1">• 새로운 버전의 서식 다운로드가 완료 될 때까지\n\t기기의 3G / LTE / 보안 Wi-Fi 연결을 하지 마세요.</string>
+    <string name="form_update_notice_item_2">• 기기의 저장 공간이 충분하지 확인하세요.</string>
+    <string name="form_update_check">버전 확인 중</string>
+    <string name="form_update_start">업데이트 하기</string>
+    <string name="form_update_ing">업데이트 중 (%d/%d)</string>
+    <string name="form_update_error_storage">기기의 저장 공간이 충분하지 않습니다.\n저장 공간 확인 후 다시 시도해 주십시오.\n(최소 저장 공간 200MB 필요)</string>
+    <string name="form_update_error_server">서버로부터 응답이 없습니다.</string>
+
+    <!-- 스플래시 팝업 -->
+    <string name="alert_network_is_not_connected_message">네트워크가 연결되어 있지 않습니다.</string>
+    <string name="alert_detect_rooting_message">고객님의 기기에서 해킹 위험(루팅)이\n탐지 되었습니다.\n서비스 보안 정책에 따라 서비스를 종료합니다.</string>
+    <string name="alert_detect_spyware_message">고객님의 기기에서 악성코드 및 악성앱이 탐지\n되었습니다.\n서비스 보안 정책에 따라 서비스를 종료합니다.\n(%s)</string>
+    <string name="malware">악성코드</string>
+    <string name="alert_vaccine_permission_restricted_message">"[설정]->[애플리케이션]->[%s]로 이동하세요.\n[배터리]->[백그라운드]에서 실행 옵션을 활성화 하거나\n[배터리]->[제한] 외 옵션을 선택 후 앱을 재실행하세요."</string>
+    <string name="alert_vaccine_permission_need_title">백신 실행을 위한 권한 필요</string>
+
+    <!-- 로그인 팝업 -->
+    <string name="alert_close_app">앱을 종료하시겠습니까?</string>
+
+    <!-- 인증 팝업 -->
+    <string name="popup_auth_applicant_cell_phone_title" translatable="false">2단계 인증</string>
+    <string name="popup_auth_applicant_cell_phone_subtitle">%1$s으로 로그인을 위한 코드가 전송됩니다.\n휴대폰으로 전송 받은 인증코드를 입력하세요.</string>
+    <string name="send_auth_number">인증번호 받기</string>
+    <string name="auth_number_confirm">인증번호 확인</string>
+    <string name="re_send_auth_number">재전송</string>
+    <string name="request_write_auth_number_hint">코드 입력</string>
+    <string name="valid_time">유효시간  %s </string>
+    <string name="valid_time_extension">시간연장</string>
+    <string name="auth_number_timeout">인증번호 유효시간이 초과되었습니다.\n인증번호를 재발송하세요.</string>
+    <string name="invalid_auth_number">인증번호 6자리를 입력해주세요.</string>
+    <string name="changed_mobile_number_hint">※ 휴대폰 번호가 변경된 경우 관리자에게 휴대폰 변경 요청 바랍니다.</string>
+
+    <!-- Top bar -->
+    <string name="popup_content_cancel">신청서 작성을 취소하시겠습니까?</string>
+    <string name="popup_content_delete">현재 신청서를 삭제하시겠습니까?\n삭제 후 복원은 불가능합니다.</string>
+    <string name="popup_content_save">신청서를 임시저장 후\n메인 화면으로 이동하시겠습니까?</string>
+    <string name="popup_content_edit">신청서를 수정하시겠습니까?</string>
+    <string name="popup_content_complete">신청서를 작성완료하시겠습니까?</string>
+    <string name="popup_content_transmit">신청서를 제출하시겠습니까?</string>
+
+    <!-- 카메라 촬영 가이드 -->
+    <string name="camera_overlay_guide">신분증을 네모 영역 안에 맞춰 주세요.</string>
+    <string name="camera_guide1">신분증을 사각 테두리\n촬영 가이드에 맞춰 촬영하세요.</string>
+    <string name="camera_guide2">어두운 배경에서 촬영하세요.</string>
+    <string name="camera_guide3">그림자와 빛 반사를 주의하세요.</string>
+    <string name="camera_guide4">※ 유의사항</string>
+    <string name="camera_guide5">· 복사본이나 사진은 사용할 수 없습니다.</string>
+    <string name="camera_guide6">&#160;&#160;신분증 원본으로 촬영하세요.</string>
+    <string name="camera_guide7">· 정보 확인이 어렵거나 훼손된 신분증은 거래가 거절될 수 있습니다.</string>
+    <string name="camera_guide_title">신분증 촬영</string>
+    <string name="camera_retake">재촬영</string>
+    <string name="camera_auth">인증하기</string>
+    <string name="camera_auth_guide_popup_title">신분증 인증 오류가 발생한 경우 확인사항</string>
+    <string name="camera_auth_guide_popup_content1">1. 발급 일자 입력 오류 5회 초과한 경우</string>
+    <string name="camera_auth_guide_popup_content1_text">- \'주민등록증 진위확인/잠김해제\'를 진행해주세요.</string>
+    <string name="camera_auth_guide_popup_content2">&lt;주민등록증 진위확인/잠김해제 방법&gt;</string>
+    <string name="camera_auth_guide_popup_content2_text">
+        · 신분증 본인의 공인인증서를 준비하기\n
+        · 민원24 (http://www.minwon.go.kr) 이동하기\n
+        · \'확인 서비스 &gt; 주민등록증 진위확인/잠김해제\' 메뉴로 이동하기\n
+        · [주민등록 잠김해제] 버튼 클릭 후 해제 서비스 진행하기
+    </string>
+    <string name="camera_auth_guide_popup_content3">2. 입력하신 발급 일자가 등록된 발급 일자와 일치하지 않는 경우</string>
+    <string name="camera_auth_guide_popup_content3_text">
+        - 입력하신 발급 일자를 삭제 후 다시 입력해주세요.\n
+        - 그래도 오류가 발생한다면, 가맹점주의 신분증 재발급 여부를 확인해주세요.
+    </string>
+    <string name="camera_auth_guide_popup_content4">3. 입력하신 내용이 사용할 수 없는 주민등록증인 경우</string>
+    <string name="camera_auth_guide_popup_content4_text">- 성명 및 주민등록번호를 확인 후 다시 입력해주세요.</string>
+    <string name="camera_auth_guide_popup_content5">4. 처리 중 오류가 발생한 경우</string>
+    <string name="camera_auth_guide_popup_content5_text">- 주민등록번호 앞(6자리)/뒤(7자리) 자릿수에 맞추어 숫자를 입력하였는지 확인해주세요.</string>
+
+
+    <!-- 신분증 인식 결과 -->
+    <string name="idcard_recog_content">잘못 인식된 부분은 수정해 주세요.</string>
+    <string name="star">*</string>
+    <string name="hyphen">&#160;-&#160;</string>
+    <string name="name">이름</string>
+    <string name="date">날짜</string>
+    <string name="jumin_num">주민번호</string>
+    <string name="placeholder_first_jumin">주민번호 앞자리</string>
+    <string name="placeholder_last_jumin">주민번호 뒷자리</string>
+    <string name="input_placeholder_last_jumin">주민번호 뒷자리를 입력해주세요.(7자리)</string>
+    <string name="issue_date">발급일자</string>
+    <string name="issue_office">발급처</string>
+    <string name="select_date">날짜선택</string>
+    <string name="birthday">생년월일</string>
+    <string name="drive_license">면허번호</string>
+    <string name="input_title_drive_license">운전면허번호 가운데 자리</string>
+    <string name="input_placeholder_drive_license">운전면허번호 세번째 항목의 6자리를 입력해 주세요.</string>
+    <string name="foreign_license">외국인\n등록번호</string>
+    <string name="placeholder_first_num">등록번호 앞자리</string>
+    <string name="placeholder_last_num">등록번호 뒷자리</string>
+    <string name="drive_license_input_guide">
+        ※ 운전면허증에 입력된 내용을 그대로 입력해주세요.\n
+        &#160;&#160;예) 11-00-000000-00 / 서울-00-000000-00</string>
+    <string name="button_text_show_auth_guide_popup">신분증 인증 오류가 발생한 경우 확인사항</string>
+    <string name="retry_camera_take">인식된 정보가 잘못된 경우 재촬영 해주세요.</string>
+    <string name="ocr_failed_popup">신분증 인식을 실패하였습니다.\n재시도 하시겠습니까?</string>
+    <string name="empty_auth_field">입력하지 않은 정보가 있습니다. 모두 입력해 주세요.</string>
+
+    <!-- 신분증 정보 직접 입력 팝업 -->
+    <string name="direct_idcard_input">실명확인 정보 직접입력</string>
+    <string name="jumin_card">주민등록증</string>
+    <string name="drive_license_card">운전면허증</string>
+    <string name="unvalid_idcard_info">입력 정보가 올바르지 않습니다.\n확인 후 다시 시도해 주세요</string>
+    <string name="direct_input_guide">아래의 모든 항목을 입력해 주세요</string>
+
+    <!-- 인감 -->
+    <string name="seal_scan">인감 촬영</string>
+
+    <!-- 기타신분증 -->
+    <string name="foreign_card">외국인 등록증</string>
+    <string name="foreign_scan">외국인 등록증 촬영</string>
+    <string name="passport">여권</string>
+    <string name="passport_scan">여권 촬영</string>
+    <string name="oversea_card">재외국민 등록증</string>
+    <string name="oversea_scan">재외국민 촬영</string>
+    <string name="compatriot_card">국내거소신고증</string>
+    <string name="compatriot_scan">국내거소신고증 촬영</string>
+    <string name="other_card">기타신분증</string>
+
+    <!-- 문서촬영 -->
+    <string name="doc_camera_toast">문서가 여러장인 경우 촬영 버튼을 눌러 모두 촬영해 주세요.</string>
+    <string name="normal_auth_camera_toast">어두운 배경에서 그림자와 빛 반사에 주의하여 촬영하세요.\n정보 확인이 어렵거나 훼손된 신분증은 신청이 거절될 수 있습니다.</string>
+    <string name="doc_take_complete_toast">문서 촬영을 완료 하였습니다. 미리보기에서 촬영한 문서를 확인해 주세요.</string>
+    <string name="add_masking">마스킹 적용</string>
+    <string name="remove_masking">마스킹 삭제</string>
+    <string name="send_doc_fail_popup_title">증빙서류 전송실패</string>
+    <string name="nomasking_alert">개인정보 마스킹이 필요한 문서입니다.</string>
+    <string name="masking_add_compelete">마스킹 적용을 완료하였습니다.</string>
+    <string name="masking_remove_compelete">마스킹을 삭제하였습니다.</string>
+
+    <!-- 첨부문서보기 -->
+    <string name="delete_image_popup">이미지를 삭제하시겠습니까?</string>
+    <string name="empty_image">이미지가 모두 삭제되었습니다.</string>
+    <string name="camera_complete">촬영이 완료되었습니다.</string>
+
+    <!-- 설정 -->
+    <string name="toast_msg_splash_permission_denied">앱을 사용할 수 없습니다. 권한을 허용해 주세요.</string>
+
+    <!-- 커스텀 보안 키패드 화면-->
+    <string name="secure_keypad_default_title">비밀번호</string>
+    <string name="secure_keypad_default_placeholder">비밀번호를 입력해주세요.</string>
+
+</resources>

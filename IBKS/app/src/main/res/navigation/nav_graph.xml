@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/splashFragment">
+
+    <fragment
+        android:id="@+id/splashFragment"
+        android:name="com.inzisoft.ibks.view.fragment.SplashFragment"
+        android:label="SplashFragment">
+        <action
+            android:id="@+id/action_splashFragment_to_applicationUpdateFragment"
+            app:destination="@id/applicationUpdateFragment"
+            app:popUpTo="@id/splashFragment"
+            app:popUpToInclusive="true" />
+
+        <action
+            android:id="@+id/action_splashFragment_to_loginFragment"
+            app:destination="@id/loginFragment"
+            app:popUpTo="@id/splashFragment"
+            app:popUpToInclusive="true" />
+
+    </fragment>
+    <fragment
+        android:id="@+id/formUpdateFragment"
+        android:name="com.inzisoft.ibks.view.fragment.FormUpdateFragment"
+        android:label="FormUpdateFragment" >
+        <action
+            android:id="@+id/action_formUpdateFragment_to_mainFragment"
+            app:destination="@id/mainFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/applicationUpdateFragment"
+        android:name="com.inzisoft.ibks.view.fragment.ApplicationUpdateFragment"
+        android:label="ApplicationUpdateFragment">
+        <action
+            android:id="@+id/action_applicationUpdateFragment_to_loginFragment"
+            app:destination="@id/loginFragment"
+            app:popUpTo="@id/loginFragment"
+            app:popUpToInclusive="true" />
+
+    </fragment>
+    <fragment
+        android:id="@+id/loginFragment"
+        android:name="com.inzisoft.ibks.view.fragment.LoginFragment"
+        android:label="LoginFragment" >
+        <action
+            android:id="@+id/action_loginFragment_to_formUpdateFragment"
+            app:destination="@id/formUpdateFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/mainFragment"
+        android:name="com.inzisoft.ibks.view.fragment.MainFragment"
+        android:label="MainFragment" >
+        <action
+            android:id="@+id/action_mainFragment_to_loginFragment"
+            app:destination="@id/loginFragment" />
+        <action
+            android:id="@+id/action_mainFragment_to_previewFragment"
+            app:destination="@id/previewFragment" />
+    </fragment>
+
+    <dialog
+        android:id="@+id/ocrCameraDialogFragment"
+        android:name="com.inzisoft.ibks.view.dialog.OcrCameraDialogFragment"
+        android:label="ocrCameraDialogFragment">
+        <argument
+            android:name="scriptFunName"
+            app:argType="string" />
+        <argument
+            android:name="authCameraData"
+            app:argType="com.inzisoft.ibks.data.web.AuthCameraData" />
+    </dialog>
+
+    <dialog
+        android:id="@+id/normalAuthCameraDialogFragment"
+        android:name="com.inzisoft.ibks.view.dialog.NormalAuthCameraDialogFragment"
+        android:label="normalAuthCameraDialogFragment">
+        <argument
+            android:name="scriptFunName"
+            app:argType="string" />
+        <argument
+            android:name="authCameraData"
+            app:argType="com.inzisoft.ibks.data.web.AuthCameraData" />
+        <action
+            android:id="@+id/action_normalAuthCameraDialogFragment_to_previewDocDialogFragment"
+            app:destination="@id/previewDocDialogFragment" />
+    </dialog>
+
+    <dialog
+        android:id="@+id/previewDocDialogFragment"
+        android:name="com.inzisoft.ibks.view.dialog.PreviewDocDialogFragment"
+        android:label="previewDocDialogFragment" >
+
+        <argument
+            android:name="scriptFunName"
+            app:argType="string" />
+
+        <argument
+            android:name="previewDocType"
+            app:argType="com.inzisoft.ibks.PreviewDocType" />
+
+        <argument
+            android:name="docInfoData"
+            app:argType="com.inzisoft.ibks.data.internal.DocInfoData" />
+    </dialog>
+    <dialog
+        android:id="@+id/directInputDialogFragment"
+        android:name="com.inzisoft.ibks.view.dialog.DirectInputDialogFragment"
+        android:label="DirectInputDialogFragment">
+        <argument
+            android:name="scriptFunName"
+            app:argType="string" />
+        <argument
+            android:name="authCameraData"
+            app:argType="com.inzisoft.ibks.data.web.AuthCameraData" />
+    </dialog>
+    <fragment
+        android:id="@+id/previewFragment"
+        android:name="com.inzisoft.ibks.view.fragment.PreviewFragment"
+        android:label="PreviewFragment" />
+</navigation>
