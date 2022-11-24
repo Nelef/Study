@@ -16,7 +16,10 @@ import androidx.core.app.NotificationCompat
 import java.text.SimpleDateFormat
 import java.util.*
 
-class RecordService: Service() {
+class RecordService(
+    setAudioSamplingRateValue: String = "44100",
+    setAudioEncodingBitRateValue: String = "128000"
+) : Service() {
     // mediaRecorder 변수 생성
     private var mediaRecorder: MediaRecorder? = null
 
@@ -29,7 +32,8 @@ class RecordService: Service() {
     val time = formatType.format(utilDate)
 
     val setAudioSamplingRateValue = SharedPreference.prefs.setAudioSamplingRateValue.toString()
-    val setAudioEncodingBitRateValue = SharedPreference.prefs.setAudioEncodingBitRateValue.toString()
+    val setAudioEncodingBitRateValue =
+        SharedPreference.prefs.setAudioEncodingBitRateValue.toString()
 
     // output 위치 설정 - download 폴더에 test.mp3로 저장.
     val output =
