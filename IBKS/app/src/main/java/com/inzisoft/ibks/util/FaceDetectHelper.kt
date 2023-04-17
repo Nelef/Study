@@ -11,7 +11,7 @@ class FaceDetectHelper {
     private var faceDetect: FaceDetect? = null
     private var isInitSucceed = false
 
-    fun processFaceDetect(context: Context, faceImage: ByteArray, step: Int, onComplete: (Boolean, String) -> Unit) {
+    fun processFaceDetect(context: Context, faceImage: ByteArray, step: Int, onComplete: (Boolean, String, String) -> Unit) {
         val result = when(step) {
             0 -> initFaceDetect(context)
             1 -> faceQA(faceImage)
@@ -19,11 +19,11 @@ class FaceDetectHelper {
         }
 
         if(step == 2 && result.first) {
-            onComplete(true, faDetectString!!)
+            onComplete(true, faDetectString!!, faDetectScore!!)
         } else if(step < 2 && result.first) {
             processFaceDetect(context, faceImage, step+1, onComplete)
         } else {
-            onComplete(false, result.second)
+            onComplete(false, result.second, "")
         }
     }
 
@@ -99,5 +99,11 @@ class FaceDetectHelper {
             }
         }
         return faceDetectResult
+    }
+
+    fun releaseFaceDetect() {
+        faceDetect?.let {
+            it.FA_End()
+        }
     }
 }

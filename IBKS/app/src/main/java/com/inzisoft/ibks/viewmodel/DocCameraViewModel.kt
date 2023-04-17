@@ -17,6 +17,7 @@ import com.inzisoft.mobile.data.RecognizeResult
 import com.inzisoft.mobile.recogdemolib.LibConstants
 import com.inzisoft.mobile.util.CommonUtils
 import com.inzisoft.ibks.data.repository.LocalRepository
+import com.inzisoft.ibks.data.repository.CameraRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.ByteArrayInputStream
@@ -26,9 +27,10 @@ import javax.inject.Inject
 class DocCameraViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     localRepository: LocalRepository,
+    cameraRepository: CameraRepository,
     pathManager: PathManager,
     @ApplicationContext context: Context
-) : BaseNormalCameraViewModel(context, savedStateHandle, pathManager, localRepository) {
+) : BaseNormalCameraViewModel(context, savedStateHandle, pathManager, localRepository, cameraRepository) {
 
     override fun saveImageBitmap(bitmap: Bitmap, imageFilePath: String) {
         // 문서촬영 카메라는 세로UI 이고 촬영후 이미지가 가로로 나오기때문에 회전해서 저장한다.
@@ -73,6 +75,6 @@ class DocCameraViewModel @Inject constructor(
     }
 
     override fun getCameraConfig(): CameraConfig {
-        return CameraConfig(LibConstants.TYPE_PAPER, 6000000, docInfoData.docName)
+        return CameraConfig(LibConstants.TYPE_PAPER, 6000000, docInfoData.docName, false)
     }
 }

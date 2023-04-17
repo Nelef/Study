@@ -3,10 +3,13 @@ package com.inzisoft.ibks.util.skeypad
 import android.app.Activity
 import android.widget.EditText
 import androidx.core.widget.addTextChangedListener
+import com.google.android.gms.common.util.Base64Utils
 import com.inzisoft.ibks.util.log.QLog
 import com.nprotect.keycryptm.Defines
 import com.nprotect.keycryptm.IxConfigureInputItem
 import com.nprotect.keycryptm.IxKeypadManageHelper
+import java.security.DigestException
+import java.security.MessageDigest
 
 object SecureKeyPad {
 
@@ -47,7 +50,7 @@ object SecureKeyPad {
         maxLength: Int = 14,
         onKeypadChangeHeight: (height: Int) -> Unit,
         onTextChanged: (text: String) -> Unit,
-        onConfirm: (ByteArray?) -> Unit = {}
+        onConfirm: (realText: ByteArray?, hashText: String?) -> Unit
     ) {
         activity ?: kotlin.run {
             QLog.e("SecureKeyPad", "not found activity.")
@@ -84,7 +87,9 @@ object SecureKeyPad {
 
                 override fun onKeypadFinish() {
                     onKeypadChangeHeight(0)
-                    onConfirm(getRealTextS(secureEditText))
+                    val realText = getRealTextS(secureEditText)
+                    val hashText = if(realText == null) "" else getEncSHA256(realText)
+                    onConfirm(realText, hashText)
                 }
 
                 override fun onKeypadFinish(resultCode: Int) {}
@@ -104,6 +109,18 @@ object SecureKeyPad {
             inputConfig.maxLength = maxLength
             it.configureInputBoxAndStart(secureEditText, inputConfig)
         }
+    }
+
+    fun getEncSHA256(input: ByteArray): String {
+        val hash: ByteArray
+        try {
+            val md = MessageDigest.getInstance("SHA-256")
+            md.update(input)
+            hash = md.digest()
+        } catch (e: CloneNotSupportedException) {
+            throw DigestException("couldn't make digest of patial content")
+        }
+        return Base64Utils.encode(hash)
     }
 
     fun onConfigurationChanged() {

@@ -83,6 +83,7 @@ fun IdCardDetail(
                     onDatePickerShow = onDatePickerShow
                 )
             }
+            else -> {}
         }
     }
 }
@@ -288,9 +289,7 @@ fun RowIdNum(
                 onNext = { focusManager.moveFocus(FocusDirection.Right) }
             )
         ) {
-            if (it.length <= 6) {
-                authData.dataMap[AuthData.FRONT_IDNUM] = it
-            }
+            authData.dataMap[AuthData.FRONT_IDNUM] = it.substring(0, it.length.coerceAtMost(6))
         }
         Hyphen()
 
@@ -389,14 +388,14 @@ fun RowLicenseNum(
         Spacer(modifier = Modifier.width(spaceWidth))
         val focusManager = LocalFocusManager.current
         ResultTextField(
-            modifier = Modifier.width(36.dp),
+            modifier = Modifier.width(44.dp),
             text = driveLicenseData.dataMap[AuthData.LICNUM0_1] ?: "",
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
             keyboardActions = KeyboardActions(
                 onNext = { focusManager.moveFocus(FocusDirection.Right) }
             )
         ) {
-            driveLicenseData.dataMap[AuthData.LICNUM0_1] = it
+            driveLicenseData.dataMap[AuthData.LICNUM0_1] = it.substring(0, it.length.coerceAtMost(2))
         }
         Hyphen()
         ResultTextField(
@@ -410,7 +409,7 @@ fun RowLicenseNum(
                 onNext = { focusManager.moveFocus(FocusDirection.Right) }
             )
         ) {
-            driveLicenseData.dataMap[AuthData.LICNUM2_3] = it
+            driveLicenseData.dataMap[AuthData.LICNUM2_3] = it.substring(0, it.length.coerceAtMost(2))
         }
         Hyphen()
 
@@ -425,7 +424,7 @@ fun RowLicenseNum(
                 onNext = { focusManager.moveFocus(FocusDirection.Right) }
             )
         ) {
-            driveLicenseData.dataMap[AuthData.LICNUM4_9] = it
+            driveLicenseData.dataMap[AuthData.LICNUM4_9] = it.substring(0, it.length.coerceAtMost(6))
         }
 
 //        val licNum4_9 = driveLicenseData.dataMap[AuthData.LICNUM4_9] ?: ""
@@ -451,7 +450,7 @@ fun RowLicenseNum(
                 onDone = { focusManager.clearFocus() }
             )
         ) {
-            driveLicenseData.dataMap[AuthData.LICNUM10_11] = it
+            driveLicenseData.dataMap[AuthData.LICNUM10_11] = it.substring(0, it.length.coerceAtMost(2))
         }
     }
 }
@@ -599,7 +598,6 @@ internal class DateVisualTransformation: VisualTransformation {
             out += trimmed[i]
             if (i == 3 || i == 5) out += "-"
         }
-        Log.e("SW_DEBUG", "dateFilter" + text.text + " // trimmed: $trimmed")
 
         val dateOffsetTranslator = object : OffsetMapping {
             override fun originalToTransformed(offset: Int): Int {
@@ -608,7 +606,6 @@ internal class DateVisualTransformation: VisualTransformation {
                 else if (offset <= 8) offset + 2
                 else 10
 
-                Log.e("SW_DEBUG", "originalToTransformed offset: $offset result: $resultOffset")
                 return resultOffset
             }
 
@@ -618,7 +615,7 @@ internal class DateVisualTransformation: VisualTransformation {
                     else if (offset <= 7) offset - 1
                     else if (offset <= 10) offset - 2
                     else 8
-                Log.e("SW_DEBUG", "transformedToOriginal offset: $offset result: $resultOffset")
+
                 return resultOffset
             }
         }

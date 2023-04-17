@@ -1,5 +1,11 @@
 package com.inzisoft.ibks.view.fragment
 
+import android.content.Intent
+import android.net.Uri
+import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.view.View
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -17,17 +23,23 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.em
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
-import com.inzisoft.ibks.base.BaseFragment
-import com.inzisoft.ibks.viewmodel.ApplicationUpdateViewModel
-import com.inzisoft.ibks.view.compose.ButtonStyle
-import dagger.hilt.android.AndroidEntryPoint
 import com.inzisoft.ibks.R
+import com.inzisoft.ibks.base.BaseFragment
+import com.inzisoft.ibks.base.PopupState
 import com.inzisoft.ibks.base.Right
+import com.inzisoft.ibks.util.FileUtils
+import com.inzisoft.ibks.util.log.QLog
+import com.inzisoft.ibks.view.compose.ButtonStyle
 import com.inzisoft.ibks.view.compose.ColorButton
-import com.inzisoft.ibks.view.compose.theme.*
+import com.inzisoft.ibks.view.compose.theme.IBKSTheme
+import com.inzisoft.ibks.view.compose.theme.disableColor
+import com.inzisoft.ibks.view.compose.theme.mainColor
+import com.inzisoft.ibks.view.compose.theme.point4Color
+import com.inzisoft.ibks.viewmodel.ApplicationState
+import com.inzisoft.ibks.viewmodel.ApplicationUpdateViewModel
+import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class ApplicationUpdateFragment : BaseFragment() {
@@ -35,170 +47,241 @@ class ApplicationUpdateFragment : BaseFragment() {
     private val viewModel: ApplicationUpdateViewModel by viewModels()
 
     init {
+
         baseCompose.content = {
-            BackHandler(enabled = true, onBack = {
-                showAlertDialog(
-                    contentText = getString(R.string.alert_close_app),
-                    rightBtnText = getString(R.string.yes),
-                    leftBtnText = getString(R.string.no),
-                    onDismissRequest = {
-                        if (it == Right) {
-                            terminateApplication()
-                        }
-                    }
-                )
-            })
+            when (val state = viewModel.uiState) {
+                is ApplicationState.Complete -> install(state.uri)
+                is ApplicationState.Error -> {
+                    showAlert(getString(R.string.application_update_fail, state.code))
+                }
+                else -> {}
+            }
 
             ApplicationUpdateScreen(
-                onStartUpdate = { viewModel.startUpdate() },
-                current = viewModel.current,
-                total = viewModel.total,
-                progress = viewModel.progress
+                onInstall = {
+                    val state =
+                        viewModel.uiState as? ApplicationState.Complete
+                            ?: return@ApplicationUpdateScreen
+                    install(state.uri)
+                },
+                onStartUpdate = {
+                    startUpdate()
+                },
+                current = viewModel.progress.downloaded,
+                total = viewModel.progress.total,
+                progress = viewModel.progress.progress
             )
+        }
+    }
 
-            if (viewModel.updateComplete) {
-                findNavController().navigate(R.id.action_applicationUpdateFragment_to_loginFragment)
+    private fun startUpdate() {
+        if (!availableNetwork()) {
+            showAlert(getString(R.string.form_update_error_network), getString(R.string.retry)) {
+                Handler(Looper.getMainLooper()).postDelayed({ startUpdate() }, 100)
             }
-        }
-
-    }
-
-    @Preview(widthDp = 1280, heightDp = 800)
-    @Composable
-    fun PreviewApplicationUpdateScreen2() {
-        IBKSTheme {
-            ApplicationUpdateScreen(onStartUpdate = {})
+        } else if (!FileUtils.availableStorage(requireContext(), 200 * 1024 * 1024)) {
+            showAlert(getString(R.string.form_update_error_storage)) {
+                terminateApplication()
+            }
+        } else {
+            viewModel.startUpdate(requireContext())
         }
     }
 
-    @Preview(widthDp = 1280, heightDp = 800)
-    @Composable
-    fun PreviewApplicationUpdateScreen3() {
-        IBKSTheme {
-            ApplicationUpdateScreen(onStartUpdate = {}, current = 1, total = 10, progress = 0.5f)
+    private fun showAlert(
+        message: String,
+        rightBtnText: String = getString(R.string.confirm),
+        onDismissRequest: (state: PopupState) -> Unit = { viewModel.init() }
+    ) {
+        showAlertDialog(
+            contentText = message,
+            rightBtnText = rightBtnText,
+            onDismissRequest = onDismissRequest
+        )
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        arguments?.let {
+            val args = ApplicationUpdateFragmentArgs.fromBundle(it)
+            viewModel.load(args.version, args.name, args.fileRefNo, args.fromSplash)
         }
     }
 
-    @Composable
-    fun ApplicationUpdateScreen(
-        onStartUpdate: () -> Unit,
-        current: Int = 0,
-        total: Int = 0,
-        progress: Float = 0f,
+    private fun install(uri: Uri) {
+        QLog.i("start install")
+
+        startActivity(
+            Intent(Intent.ACTION_VIEW)
+                .setDataAndType(uri, "application/vnd.android.package-archive")
+                .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        )
+    }
+
+}
+
+@Preview(widthDp = 1280, heightDp = 800)
+@Composable
+fun ApplicationUpdateScreen1() {
+    IBKSTheme {
+        ApplicationUpdateScreen(onInstall = {}, onStartUpdate = {})
+    }
+}
+
+@Preview(widthDp = 1280, heightDp = 800)
+@Composable
+fun ApplicationUpdateScreen2() {
+    IBKSTheme {
+        ApplicationUpdateScreen(
+            onInstall = {},
+            onStartUpdate = {},
+            current = 40.0f,
+            total = 80f,
+            progress = 0.5f
+        )
+    }
+}
+
+@Preview(widthDp = 1280, heightDp = 800)
+@Composable
+fun ApplicationUpdateScreen3() {
+    IBKSTheme {
+        ApplicationUpdateScreen(
+            onInstall = {},
+            onStartUpdate = {},
+            current = 80f,
+            total = 80f,
+            progress = 1f
+        )
+    }
+}
+
+@Composable
+fun ApplicationUpdateScreen(
+    onInstall: () -> Unit,
+    onStartUpdate: () -> Unit,
+    current: Float = 0f,
+    total: Float = 0f,
+    progress: Float = 0f,
+) {
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.White)
     ) {
 
-        Box(
+        Column(
             modifier = Modifier
-                .fillMaxSize()
-                .background(MaterialTheme.colors.background1Color)
+                .fillMaxHeight()
+                .align(Alignment.Center),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
+
+            Text(
+                text = stringResource(id = R.string.application_update_title),
+                color = MaterialTheme.colors.mainColor,
+                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.h1
+            )
+
+            Text(
+                text = stringResource(id = R.string.application_update_subtitle),
+                modifier = Modifier.padding(top = 24.dp, bottom = 96.dp),
+                fontWeight = FontWeight.Medium,
+                style = MaterialTheme.typography.subtitle1,
+                textAlign = TextAlign.Center
+            )
 
             Column(
                 modifier = Modifier
-                    .fillMaxHeight()
-                    .align(Alignment.Center),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
+                    .padding(horizontal = 20.dp)
+                    .border(
+                        width = 1.dp,
+                        color = MaterialTheme.colors.disableColor,
+                        shape = RoundedCornerShape(16.dp)
+                    )
+                    .padding(top = 16.dp, start = 48.dp, end = 48.dp, bottom = 24.dp)
+                    .align(Alignment.CenterHorizontally),
+                verticalArrangement = Arrangement.Center
             ) {
-
                 Text(
-                    text = stringResource(id = R.string.app_update_title),
-                    color = MaterialTheme.colors.point1Color,
+                    text = stringResource(id = R.string.application_update_notice_title),
+                    modifier = Modifier.align(Alignment.CenterHorizontally),
+                    color = MaterialTheme.colors.point4Color,
                     fontWeight = FontWeight.Bold,
-                    style = MaterialTheme.typography.h4
+                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.h6
                 )
 
                 Text(
-                    text = stringResource(id = R.string.app_update_subtitle),
-                    modifier = Modifier.padding(top = 24.dp, bottom = 48.dp),
-                    fontWeight = FontWeight.Medium,
-                    textAlign = TextAlign.Center,
-                    lineHeight = 1.5.em,
+                    text = stringResource(id = R.string.application_update_notice_item_1),
+                    modifier = Modifier.padding(top = 16.dp),
+                    fontWeight = FontWeight.Light,
                     style = MaterialTheme.typography.subtitle1
                 )
 
+                Text(
+                    text = stringResource(id = R.string.application_update_notice_item_2),
+                    modifier = Modifier.padding(top = 12.dp),
+                    fontWeight = FontWeight.Light,
+                    style = MaterialTheme.typography.subtitle1
+                )
+            }
+
+            if (progress == 1f) {
+                ColorButton(
+                    onClick = onInstall,
+                    modifier = Modifier
+                        .width(320.dp)
+                        .padding(top = 64.dp),
+                    text = stringResource(id = R.string.application_update_install),
+                    buttonStyle = ButtonStyle.Big
+                )
+            } else if (current > 0 && total > 0) {
                 Column(
                     modifier = Modifier
-                        .border(
-                            width = 1.dp,
-                            color = MaterialTheme.colors.disableColor,
-                            shape = RoundedCornerShape(16.dp)
-                        )
-                        .padding(top = 16.dp, start = 48.dp, end = 48.dp, bottom = 24.dp)
-                        .align(Alignment.CenterHorizontally),
-                    verticalArrangement = Arrangement.Center
+                        .padding(top = 64.dp)
+                        .fillMaxWidth(0.375f)
                 ) {
-                    Text(
-                        text = stringResource(id = R.string.app_update_notice_title),
-                        modifier = Modifier.align(Alignment.CenterHorizontally),
-                        color = MaterialTheme.colors.point4Color,
-                        fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Center,
-                        style = MaterialTheme.typography.h6
-                    )
-
-                    Text(
-                        text = stringResource(id = R.string.app_update_notice_item_1),
-                        modifier = Modifier.padding(top = 16.dp),
-                        fontWeight = FontWeight.Light,
-                        lineHeight = 1.5.em,
-                        style = MaterialTheme.typography.subtitle1
-                    )
-
-                    Text(
-                        text = stringResource(id = R.string.app_update_notice_item_2),
-                        modifier = Modifier.padding(top = 12.dp),
-                        fontWeight = FontWeight.Light,
-                        lineHeight = 1.5.em,
-                        style = MaterialTheme.typography.subtitle1
-                    )
-                }
-
-                if (current > 0 && total > 0) {
-                    Column(
-                        modifier = Modifier
-                            .padding(top = 84.dp)
-                            .height(56.dp)
-                            .fillMaxWidth(0.375f)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text(
-                                text = stringResource(
-                                    id = R.string.app_update_ing,
-                                    current,
-                                    total
-                                ),
-                                style = MaterialTheme.typography.body1
-                            )
+                        Text(
+                            text = stringResource(
+                                id = R.string.application_update_ing,
+                                current,
+                                total
+                            ),
+                            style = MaterialTheme.typography.body1
+                        )
 
-                            Text(
-                                text = "${(progress * 100).toInt()}%",
-                                style = MaterialTheme.typography.body1
-                            )
-                        }
-
-                        LinearProgressIndicator(
-                            progress = progress, modifier = Modifier
-                                .padding(top = 8.dp)
-                                .height(8.dp)
-                                .fillMaxWidth()
+                        Text(
+                            text = "${(progress * 100).toInt()}%",
+                            style = MaterialTheme.typography.body1
                         )
                     }
-                } else {
-                    ColorButton(
-                        onClick = onStartUpdate,
-                        modifier = Modifier
-                            .padding(top = 84.dp)
-                            .size(240.dp, 56.dp),
-                        text = stringResource(id = R.string.app_update_start),
-                        buttonStyle = ButtonStyle.Big
+
+                    LinearProgressIndicator(
+                        progress = progress, modifier = Modifier
+                            .padding(top = 8.dp)
+                            .height(8.dp)
+                            .fillMaxWidth()
                     )
                 }
+            } else {
+                ColorButton(
+                    onClick = onStartUpdate,
+                    modifier = Modifier
+                        .width(320.dp)
+                        .padding(top = 64.dp),
+                    text = stringResource(id = R.string.application_update_start),
+                    buttonStyle = ButtonStyle.Big
+                )
             }
         }
     }
-
 }

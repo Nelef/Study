@@ -1,5 +1,6 @@
 package com.inzisoft.ibks.viewmodel
 
+import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import androidx.compose.runtime.getValue
@@ -13,18 +14,21 @@ import com.inzisoft.ibks.PreviewDocType
 import com.inzisoft.ibks.base.BaseDialogFragmentViewModel
 import com.inzisoft.ibks.data.internal.DocImageData
 import com.inzisoft.ibks.data.internal.DocInfoData
+import com.inzisoft.ibks.data.repository.CameraRepository
 import com.inzisoft.ibks.data.repository.LocalRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import java.io.File
 import javax.inject.Inject
 
 @HiltViewModel
 class PreviewDocViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val pathManager: PathManager,
-    private val localRepository: LocalRepository
+    private val localRepository: LocalRepository,
+    private val cameraRepository: CameraRepository,
 ) : BaseDialogFragmentViewModel() {
 
     val docInfoData = savedStateHandle.get<DocInfoData>("docInfoData")
@@ -53,56 +57,32 @@ class PreviewDocViewModel @Inject constructor(
         }
     }
 
-    fun sendDocImageToServer() {
+    fun complete() {
         viewModelScope.launch(Dispatchers.IO) {
             when (previewDocType) {
                 PreviewDocType.PREVIEW_DOC -> {}
                 PreviewDocType.NORMAL_AUTH,
                 PreviewDocType.TAKE_DOC -> {
-                    if (docInfoData!!.maskingYn && !masked) {
-                        dialogUiState = DialogUiState.MaskingAlertDialog
-                    } else {
-                        docInfoData.apply {
-                            if (previewDocType == PreviewDocType.NORMAL_AUTH) {
-                                for (docImageData: DocImageData in docImageDataList) {
-                                    docImageData.renameToRealImage()
+//                    if (docInfoData!!.maskingYn && !masked) {
+//                        dialogUiState = DialogUiState.MaskingAlertDialog
+//                    } else {
+                        docInfoData?.apply {
+                            // 필요없는 이미지 삭제함.
+                            File(pathManager.getEvidenceDocDir(entryId, docCode)).listFiles()?.onEach {
+                                if(it.exists() && it.isFile) {
+                                    it.delete()
                                 }
-                                dialogUiState =
-                                    DialogUiState.SendSuccessDialog(docImageDataList.size)
-                            } else {
-//                                val userInfo = localRepository.getUserInfo().first()
-//                                cameraRepository.sendAttachedImage(
-//                                    sendAttachImageRequest = SendAttachImageRequest(
-//                                        entryId = entryId,
-////                                        provId = userInfo.provId.name,
-////                                        userId = userInfo.userId,
-//                                        docCtgCd = docCtgCd,
-//                                        attachCd = docCode
-//                                    ),
-//                                    docImageDataList = docImageDataList,
-//                                    isSendCacheImage = true
-//                                ).collectLatest { result ->
-//                                    dialogUiState = when (result) {
-//                                        is ApiResult.Loading -> DialogUiState.Loading
-//                                        is ApiResult.Success -> {
-//                                            // 필요없는 이미지 삭제함.
-//                                            val imageCount = docImageDataList.size
-//                                            for (docImageData: DocImageData in docImageDataList) {
-//                                                docImageData.renameToRealImage()
-//                                                docImageData.clearImage()
-//                                            }
-//
-//                                            DialogUiState.SendSuccessDialog(imageCount)
-//                                        }
-//                                        is ApiResult.Error -> {
-//                                            DialogUiState.SendFailedDialog(result.message)
-//                                        }
-//                                    }
-//                                }
                             }
+                            for (docImageData: DocImageData in docImageDataList) {
+                                docImageData.renameToRealImage()
+                                docImageData.clearImage()
+                            }
+
+                            dialogUiState = DialogUiState.SendSuccessDialog(docImageDataList.size)
                         }
-                    }
+//                    }
                 }
+                else -> {}
             }
         }
     }
@@ -111,20 +91,23 @@ class PreviewDocViewModel @Inject constructor(
         dialogUiState = DialogUiState.Loading
         image?.apply {
             val docImageData = docInfoData!!.docImageDataList[currentImageIndex]
-            docImageData.setMaskedImagePath(
-                entryId = entryId,
-                docCode = docInfoData.docCode,
-                index = currentImageIndex,
-                pathManager = pathManager
-            )
             previewDocState =
                 PreviewDocState.Masking(
                     docImageData,
                     this
                 )
-
-            masked = true
         }
+    }
+
+    fun saveMaskingImage(context: Context, docImageData: DocImageData, maskedBitmap: Bitmap) {
+        docImageData.saveMaskedImageFile(
+            context = context,
+            maskedBitmap = maskedBitmap,
+            entryId = entryId,
+            docCode = docInfoData!!.docCode,
+            index = currentImageIndex,
+            pathManager = pathManager
+        )
     }
 
     fun clickUnmaskingBtn() {
@@ -132,7 +115,22 @@ class PreviewDocViewModel @Inject constructor(
         docImageData.deleteMaskedImage()
         setImageData(currentImageIndex)
         previewDocState = PreviewDocState.None
-        dialogUiState = DialogUiState.MaskingRemoveCompleteDialog
+        masked = hasMaskedImage()
+    }
+
+    private fun hasMaskedImage(): Boolean {
+        var hasMaskedImage = false
+
+        run {
+            docInfoData!!.docImageDataList.forEach {
+                hasMaskedImage = it.hasMaskedImage()
+                if (hasMaskedImage) {
+                    return@run
+                }
+            }
+        }
+
+        return hasMaskedImage
     }
 
     private fun setImageData(index: Int) {
@@ -230,7 +228,6 @@ sealed class DialogUiState {
     object DeleteImageAlertDialog: DialogUiState()
     object MaskingAlertDialog: DialogUiState()
     object MaskingAddCompleteDialog: DialogUiState()
-    object MaskingRemoveCompleteDialog: DialogUiState()
     object None: DialogUiState()
     object Loading: DialogUiState()
     data class SendFailedDialog(val message: String): DialogUiState()

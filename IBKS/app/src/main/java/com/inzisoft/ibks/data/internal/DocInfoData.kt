@@ -22,13 +22,6 @@ data class DocImageData(
     private var cacheMaskedImagePath: String = ""
 
     /**
-     * 캐쉬 마스킹 이미지 패스를 만든다.
-     */
-    fun setMaskedImagePath(entryId: String, docCode: String, index: Int, pathManager: PathManager) {
-        cacheMaskedImagePath = pathManager.getEvidenceDocCacheMaskJpgImage(entryId = entryId, docCode = docCode, index = index)
-    }
-
-    /**
      * 캐쉬의 마스킹 이미지가 있으면 마스킹 이미지 패스를 리턴한다.
      * 없으면 캐쉬 원본 이미지 패스를 리턴한다.
      */
@@ -85,7 +78,7 @@ data class DocImageData(
         cacheMaskedImagePath = ""
     }
 
-    private fun hasMaskedImage(): Boolean {
+    fun hasMaskedImage(): Boolean {
         return !TextUtils.isEmpty(cacheMaskedImagePath)
     }
 
@@ -93,7 +86,8 @@ data class DocImageData(
         return !TextUtils.isEmpty(cacheOriginImagePath)
     }
 
-    fun saveMaskedImageFile(context: Context, maskedBitmap: Bitmap) {
+    fun saveMaskedImageFile(context: Context, maskedBitmap: Bitmap, entryId: String, docCode: String, index: Int, pathManager: PathManager) {
+        cacheMaskedImagePath = pathManager.getEvidenceDocCacheMaskJpgImage(entryId = entryId, docCode = docCode, index = index)
         FileUtils.saveToJpgImageFile(context = context, bitmap = maskedBitmap, imagePath = cacheMaskedImagePath)
     }
 

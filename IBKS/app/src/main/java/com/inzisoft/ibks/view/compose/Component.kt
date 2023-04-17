@@ -10,14 +10,15 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.LocalTextStyle
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
+import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.ArrowDropDown
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
@@ -25,8 +26,10 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.*
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
@@ -63,6 +66,14 @@ fun PreviewComponent() {
                     placeholder = "GuidText"
                 )
                 SearchInput(value = "Disabled", onValueChange = {}, onClear = {}, enabled = false)
+            }
+
+
+            Column {
+                val array = remember { arrayOf("빼빼로", "새우깡", "치토스") }
+
+                Spinner(itemList = array, onSelected = { _, _ ->})
+                Spinner(labelText = "과자선택", itemList = array, onSelected = {_, _ ->})
             }
         }
     }
@@ -131,7 +142,9 @@ fun Input(
             if (enabled && it.isNotEmpty()) {
                 Text(
                     text = errorMessage,
-                    modifier = Modifier.padding(top = 8.dp).then(modifier),
+                    modifier = Modifier
+                        .padding(top = 8.dp)
+                        .then(modifier),
                     textAlign = errorMessageAlignment,
                     color = MaterialTheme.colors.errorColor,
                     style = MaterialTheme.typography.body2
@@ -338,20 +351,13 @@ fun InputNoMessage(
     visualTransformation: VisualTransformation = VisualTransformation.None,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() }
 ) {
-    var textFieldValueState by remember {
-        mutableStateOf(
-            TextFieldValue(
-                text = value,
-                selection = TextRange(value.length)
-            )
-        )
-    }
-    val textFieldValue = textFieldValueState.copy(text = value, selection = TextRange(value.length))
+    var textFieldValueState by remember { mutableStateOf( TextFieldValue(text = value)) }
+    val textFieldValue = textFieldValueState.copy(text = value)
     val isFocused = interactionSource.collectIsFocusedAsState().value
 
     val backgroundColor = MaterialTheme.colors.background1Color
 
-    val textStyle = defaultTextStyle(enabled)
+    val textStyle = defaultTextStyle(enabled, 16)
     val guideTextStyle = defaultGuideTextStyle()
 
     val indicatorWidth = if (isFocused) 2.dp else 1.dp
@@ -386,10 +392,10 @@ fun InputNoMessage(
 }
 
 @Composable
-fun defaultTextStyle(enabled: Boolean) = TextStyle(
+fun defaultTextStyle(enabled: Boolean, fontSize: Int = 18) = TextStyle(
     color = if (enabled) MaterialTheme.colors.mainColor else MaterialTheme.colors.disableColor,
     fontWeight = FontWeight.Normal,
-    fontSize = if (enabled) 18.sp else 16.sp,
+    fontSize = if (enabled) fontSize.sp else (fontSize-2).sp,
     textAlign = TextAlign.Start,
 )
 
@@ -543,4 +549,146 @@ private class BasicInputMeasurePolicy() : MeasurePolicy {
             constraints.minHeight
         )
     }
+}
+
+@Preview(widthDp = 1280, heightDp = 800)
+@Composable
+fun PreviewAutoResizeText() {
+    IBKSTheme {
+        val text by remember { mutableStateOf("가나다라마바사아자차카파타하") }
+
+        Column {
+            AutoSizeText(
+                text = text
+            )
+
+            AutoSizeText(
+                text = text,
+                modifier = Modifier.width(200.dp)
+            )
+
+            AutoSizeText(
+                text = text,
+                modifier = Modifier.width(150.dp)
+            )
+        }
+
+    }
+}
+
+@Composable
+fun AutoSizeText(
+    text: String,
+    modifier: Modifier = Modifier,
+    color: Color = Color.Unspecified,
+    fontSizeMin: TextUnit = 1.sp,
+    fontSizeMax: TextUnit = MaterialTheme.typography.body1.fontSize,
+    fontSizeStep: TextUnit = 5.sp,
+    fontStyle: FontStyle? = null,
+    fontWeight: FontWeight? = null,
+    fontFamily: FontFamily? = null,
+    textAlign: TextAlign? = null,
+    style: TextStyle = LocalTextStyle.current
+) {
+    var fontSize by remember { mutableStateOf(fontSizeMax) }
+    var readyToDraw by remember { mutableStateOf(false) }
+
+    Text(
+        text = text,
+        modifier = modifier.drawWithContent {
+            if (readyToDraw) drawContent()
+        },
+        color = color,
+        fontSize = fontSize,
+        fontStyle = fontStyle,
+        fontWeight = fontWeight,
+        fontFamily = fontFamily,
+        textAlign = textAlign,
+        softWrap = false,
+        maxLines = 1,
+        onTextLayout = { result ->
+            if (result.didOverflowWidth && !readyToDraw) {
+                val nextSize = fontSize.value - fontSizeStep.value
+
+                if (nextSize <= fontSizeMin.value) {
+                    fontSize = fontSizeMin.value.sp
+                    readyToDraw = true
+                } else {
+                    fontSize = nextSize.sp
+                    readyToDraw = false
+                }
+            } else {
+                readyToDraw = true
+            }
+        },
+        style = style
+    )
+
+}
+
+@Composable
+fun Spinner(
+    modifier: Modifier = Modifier,
+    labelText: String = stringResource(id = R.string.select),
+    itemList: Array<String>,
+    onSelected: (index: Int, item: String) -> Unit
+) {
+    var selected by remember { mutableStateOf(if (itemList.isEmpty()) labelText else itemList[0]) }
+    var expanded by remember { mutableStateOf(false) }
+    var size by remember { mutableStateOf(IntSize.Zero) }
+
+    Row(
+        modifier = Modifier
+            .size(180.dp, 40.dp)
+            .then(modifier)
+            .background(color = Color.White, shape = RectangleShape)
+            .border(BorderStroke(1.dp, color = MaterialTheme.colors.sub2Color))
+            .onSizeChanged { size = it }
+            .clickable { expanded = true },
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.Top
+    ) {
+        Text(
+            text = selected,
+            color = MaterialTheme.colors.mainColor,
+            modifier = Modifier
+                .weight(1f)
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            style = MaterialTheme.typography.h6
+        )
+        Icon(
+            imageVector = Icons.Outlined.ArrowDropDown,
+            contentDescription = "",
+            modifier = Modifier.padding(8.dp)
+        )
+
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            modifier = Modifier
+                .width(size.width.dp)
+                .background(Color.White)
+        ) {
+            itemList.forEachIndexed { index, item ->
+                DropdownMenuItem(
+                    onClick = {
+                        selected = item
+                        onSelected(index, item)
+                        expanded = false
+                    },
+                    modifier = Modifier.background(Color.White)
+                ) {
+                    Text(
+                        text = item,
+                        color = MaterialTheme.colors.mainColor,
+                        style = MaterialTheme.typography.body1
+                    )
+                }
+
+                Divider()
+            }
+        }
+    }
+
+
 }

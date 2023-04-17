@@ -1,14 +1,11 @@
 package com.inzisoft.ibks.data.internal
 
 import android.content.Context
-import android.text.TextUtils
 import androidx.annotation.Keep
-import androidx.compose.ui.unit.TextUnit
 import androidx.datastore.core.DataStore
 import androidx.datastore.core.Serializer
 import androidx.datastore.dataStore
 import com.google.gson.Gson
-import com.inzisoft.ibks.AuthType
 import kotlinx.coroutines.flow.Flow
 import java.io.InputStream
 import java.io.OutputStream
@@ -33,13 +30,13 @@ class AuthInfoDataSource @Inject constructor(private val context: Context) {
 
     suspend fun clearAuthInfo() {
         context.authInfoDataStore.updateData {
-            AuthInfo("")
+            AuthInfo()
         }
     }
 
-    object AuthInfoSerializer: Serializer<AuthInfo> {
+    object AuthInfoSerializer : Serializer<AuthInfo> {
         override val defaultValue: AuthInfo
-            get() = AuthInfo("")
+            get() = AuthInfo()
 
         override fun readFrom(input: InputStream): AuthInfo {
             return Gson().fromJson(input.readBytes().decodeToString(), AuthInfo::class.java)
@@ -51,19 +48,20 @@ class AuthInfoDataSource @Inject constructor(private val context: Context) {
     }
 
     @Keep
-    class AuthInfo(val edocKey: String) {
-        var name = ""
-        var phone = ""
-        var firstIdNum = ""
-        var lastIdNum = ""
-        var birth = ""
+    data class AuthInfo(
+        val edocKey: String = "",
+        val name: String = "",
+        val phone: String = "",
+        val firstIdNum: String = "",
+        val lastIdNum: String = "",
+        val birth: String = "",
         // 신분증 타입
-        var authType = ""
+        val authType: String = "",
         // 촬영모드 (OCR 인식/일반 촬영/직접 입력)
-        var takeType = ""
-        var isAuthComplete = false
-        var issuedDate = ""
-        var issuedOffice = ""
-        var driveLicenseNo = ""
-    }
+        val takeType: String = "",
+        val isAuthComplete: Boolean = false,
+        val issuedDate: String = "",
+        val issuedOffice: String = "",
+        val driveLicenseNo: String = ""
+    )
 }

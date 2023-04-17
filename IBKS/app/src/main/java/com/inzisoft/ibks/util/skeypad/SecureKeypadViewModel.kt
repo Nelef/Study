@@ -23,6 +23,7 @@ class SecureKeypadViewModel @Inject constructor(private val cryptoService: Crypt
     var maxLength by mutableStateOf(0)
 
     var input by mutableStateOf("")
+    var decPart by mutableStateOf("")
 
     fun onInputChange(input: String) {
         this.input = input
@@ -30,6 +31,9 @@ class SecureKeypadViewModel @Inject constructor(private val cryptoService: Crypt
 
     fun encrypt(data: ByteArray?, result: (ByteArray?) -> Unit) =
         viewModelScope.launch(Dispatchers.Default) {
+            decPart = if (data == null) "" else {
+                (data[0] - 48).toString()
+            }
             val ret =
                 if (data == null) null else {
                     if (BuildConfig.ENCRYPT_KEYPAD) {

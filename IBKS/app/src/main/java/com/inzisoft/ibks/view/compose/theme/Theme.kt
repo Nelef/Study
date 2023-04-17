@@ -37,6 +37,9 @@ val Colors.background2Color: Color
 val Colors.background3Color: Color
     get() = Background3Color
 
+val Colors.background4Color: Color
+    get() = Background4Color
+
 val Colors.sub1Color: Color
     get() = Sub1Color
 
@@ -70,6 +73,9 @@ val Colors.point6Color: Color
 val Colors.point7Color: Color
     get() = Point7Color
 
+val Colors.point8Color: Color
+    get() = Point8Color
+
 val Colors.unfocusedColor: Color
     get() = UnfocusedColor
 
@@ -85,8 +91,8 @@ val Colors.grayPressedColor: Color
 val Colors.toastColor: Color
     get() = ToastColor
 
-val Colors.dividerColor: Color
-    get() = DividerColor
+val Colors.divider1Color: Color
+    get() = Divider1Color
 
 val Colors.errorColor: Color
     get() = ErrorColor

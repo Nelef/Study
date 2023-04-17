@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <com.inzisoft.paperless.ods.view.PaperlessODSView
+        android:id="@+id/paperless_ods_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:cancelOnInputMethodOutsideTouch="false"
+        app:penStrokeWidth="7.0"
+        app:showControlUi="false"
+        app:usePreviewViewPager="false"
+        app:useTooltip="false" />
+
+    <androidx.compose.ui.platform.ComposeView
+        android:id="@+id/container_compose"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -25,6 +25,7 @@ import java.util.zip.ZipOutputStream
 import kotlin.io.path.Path
 import kotlin.io.path.deleteIfExists
 import kotlin.io.path.exists
+import kotlin.io.path.isDirectory
 
 object FileUtils {
 
@@ -34,7 +35,9 @@ object FileUtils {
     @SuppressLint("NewApi")
     @Throws(IOException::class)
     private fun getRemainStorageSize(context: Context): Long {
-        if (!Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED, ignoreCase = true)) {
+        if (!Environment.getExternalStorageState()
+                .equals(Environment.MEDIA_MOUNTED, ignoreCase = true)
+        ) {
             return 0L
         }
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -62,6 +65,24 @@ object FileUtils {
         } catch (e: IOException) {
             QLog.e(e)
             false
+        }
+    }
+
+    fun saveFile(path: String, byteArray: ByteArray) {
+        with(File(path)) {
+            if (isDirectory) {
+                if (exists()) {
+                    QLog.i("directory is already exist : $path")
+                    return
+                }
+
+                mkdirs()
+            } else {
+                if (exists()) delete()
+
+                parentFile?.mkdirs()
+                writeBytes(byteArray)
+            }
         }
     }
 
@@ -120,38 +141,49 @@ object FileUtils {
         val byteImage = bitmapToByteArray(bitmap)
         if (byteImage != null) {
             val tiffImage = saveToTifImage(context = context, image = byteImage)
+
             val tiffImageFile = File(dstFilePath)
 
             tiffImageFile.parentFile?.apply {
                 mkdirs()
             }
 
-            tiffImageFile.writeBytes(tiffImage)
+            if (tiffImage != null) {
+                tiffImageFile.writeBytes(tiffImage)
+            } else {
+                tiffImageFile.writeBytes(byteImage)
+            }
         }
     }
 
     /**
      * 일반 이미지를 tif 이미지로 변환하여 리턴
      */
-    private fun saveToTifImage(context: Context, image: ByteArray): ByteArray {
+    private fun saveToTifImage(context: Context, image: ByteArray): ByteArray? {
         return convertImage(
             context,
             image,
             ImageConverter.IMAGE_FILE_TYPE_TIFF,
             ImageConverter.IMAGE_COMP_TYPE_JPEG2000_IN_TIFF,
-            100
+            100.0
         )
     }
 
     fun saveToJpgImageFile(context: Context, bitmap: Bitmap, imagePath: String) {
         val bitmapByteArray = bitmapToByteArray(bitmap)
-        val jpgImage = convertImage(
+        var jpgImage = convertImage(
             context,
             bitmapByteArray,
             ImageConverter.IMAGE_FILE_TYPE_JPEG,
             ImageConverter.IMAGE_FILE_TYPE_JPEG,
-            30
+            30.0
         )
+
+        jpgImage = if (jpgImage == null) {
+            bitmapByteArray
+        } else {
+            jpgImage
+        }
 
         File(imagePath).apply {
             parentFile?.apply {
@@ -168,15 +200,15 @@ object FileUtils {
         image: ByteArray,
         fileType: Int,
         comptype: Int,
-        comprate: Int
-    ): ByteArray {
+        comprate: Double
+    ): ByteArray? {
         val imageConvert = ImageConverter(context)
         imageConvert.initImageIOAdapter()
         return imageConvert.saveImageMem(
             image,
             fileType,
             comptype,
-            comprate.toDouble()
+            comprate
         )
     }
 
@@ -267,6 +299,25 @@ object FileUtils {
     }
 
     @Throws(IOException::class)
+    fun mkdir(dstString: String) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+            var dst = File(dstString)
+            if (dst.isDirectory) {
+                dst.mkdirs()
+            } else {
+                dst.parentFile?.mkdirs()
+            }
+        } else {
+            var dst = Path(dstString)
+            if (dst.isDirectory()) {
+                dst.toFile().mkdirs()
+            } else {
+                dst.parent.toFile().mkdirs()
+            }
+        }
+    }
+
+    @Throws(IOException::class)
     fun copy(src: String, dst: String) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
             copy(File(src), File(dst))
@@ -278,19 +329,21 @@ object FileUtils {
     @RequiresApi(Build.VERSION_CODES.O)
     @Throws(IOException::class)
     fun copy(src: Path, dst: Path) {
-        delete(dst)
+        mkdir(dst.toString())
 
-        dst.toFile().mkdirs()
-
-        Files.walk(src).forEach {
-            Files.copy(it, dst.resolve(src.relativize(it)), StandardCopyOption.REPLACE_EXISTING)
+        if (src.exists()) {
+            Files.walk(src).forEach {
+                Files.copy(it, dst.resolve(src.relativize(it)), StandardCopyOption.REPLACE_EXISTING)
+            }
         }
     }
 
     fun copy(src: File, dst: File) {
-        dst.mkdirs()
+        mkdir(dst.toString())
 
-        src.copyRecursively(dst, true)
+        if (src.exists()) {
+            src.copyRecursively(dst, true)
+        }
     }
 
     fun delete(path: String) {
@@ -321,11 +374,16 @@ object FileUtils {
 
     fun rename(src: String, dst: String) {
         File(dst).apply {
-            if(exists()) {
+            if (exists()) {
                 delete()
             }
         }
         File(src).renameTo(File(dst))
+    }
+
+    fun getNameWithoutExtension(fileName: String): String {
+        val dotIndex = fileName.lastIndexOf(".")
+        return if (dotIndex != -1) fileName.substring(0, dotIndex) else fileName
     }
 
     private const val DEFAULT_BUFFER_SIZE = 1024 * 4

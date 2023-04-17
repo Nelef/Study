@@ -60,48 +60,4 @@ abstract class CameraDialogFragment : BaseDialogFragment() {
         super.onDestroy()
         getViewModel().cameraRelease()
     }
-//    private fun initSecKeypad() {
-//        // 핸들러 생성
-//        //progressHandler = ProgressHandler(this)
-//
-//        /////////////////////////////////////////////////////////////////////////////////////////////////////
-//        /////////////////////////////////////////////////////////////////////////////////////////////////////
-//        // 보안 키패드 설정
-//        keypadMngHelper = IxKeypadManageHelper(requireContext(), 0x2231)// 키패드 핼퍼 객체 생성
-//        // 키패드 입력 시 화면 설정
-//        keypadMngHelper.setUiVisibility(Defines.FLAG_INHERIT_UI_VISIBILITY)
-//
-//        keypadMngHelper.setEnableViewMode(true)
-//        // 키패드 콜백 리스너 등록
-//        keypadMngHelper.setSecureKeypadEventListener(object : IxKeypadManageHelper.SecureKeypadEventListener {
-//            /** 키패드 높이 반환  */
-//            override fun onKeypadChangeHeight(height: Int) {}
-//
-//            /** 입력 제한 정책 위반 콜백  */
-//            override fun onInputViolationOccured(errorCode: Int) {}
-//            override fun onKeypadCreate() {
-//                TODO("Not yet implemented")
-//            }
-//
-//            override fun onKeypadFinish() {
-//            }
-//
-//            override fun onKeypadFinish(resultCode: Int) {
-//            }
-//
-//            /** 포커싱 변환 콜백  */
-//            override fun onChangeEditText(edittext: EditText) {
-//                //focusingInputBox(edittext, true) // 포커싱 되어 있는 입력창을 포커싱 입력창 이미지로 변경
-//            }
-//
-//            override fun onInputChanged(edittext: EditText, count: Int) {}
-//            override fun onInitializing(onloading: Boolean) {}
-//        })
-//
-//        val inputConfig = IxConfigureInputItem(binding.pwText, Defines.KEYPAD_TYPE_QWERTY, Defines.SHUFFLE_TYPE_GAPKEY)
-//        inputConfig.minLength = 6
-//        inputConfig.maxLength = 12
-//
-//        keypadMngHelper.configureInputBox(binding.pwText, inputConfig)
-//    }
 }

@@ -1,6 +1,7 @@
 package com.inzisoft.ibks.view.fragment
 
-import androidx.activity.compose.BackHandler
+import android.os.Handler
+import android.os.Looper
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -11,7 +12,6 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -20,14 +20,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
-import com.inzisoft.ibks.base.BaseFragment
-import com.inzisoft.ibks.viewmodel.FormUpdateViewModel
-import com.inzisoft.ibks.view.compose.ButtonStyle
-import dagger.hilt.android.AndroidEntryPoint
 import com.inzisoft.ibks.R
-import com.inzisoft.ibks.base.Right
+import com.inzisoft.ibks.base.BaseFragment
+import com.inzisoft.ibks.base.PopupState
+import com.inzisoft.ibks.util.FileUtils
+import com.inzisoft.ibks.view.compose.ButtonStyle
 import com.inzisoft.ibks.view.compose.ColorButton
 import com.inzisoft.ibks.view.compose.theme.*
+import com.inzisoft.ibks.viewmodel.FormUpdateViewModel
+import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class FormUpdateFragment : BaseFragment() {
@@ -37,32 +38,57 @@ class FormUpdateFragment : BaseFragment() {
     init {
 
         baseCompose.content = {
-            BackHandler(enabled = true, onBack = {
-                showAlertDialog(
-                    contentText = getString(R.string.alert_close_app),
-                    rightBtnText = getString(R.string.yes),
-                    leftBtnText = getString(R.string.no),
-                    onDismissRequest = {
-                        if (it == Right) {
-                            terminateApplication()
-                        }
-                    }
-                )
-            })
 
             FormUpdateScreen(
-                onStartUpdate = { viewModel.startUpdate() },
+                onStartUpdate = {
+                    startUpdate()
+                },
                 current = viewModel.current,
                 total = viewModel.total,
                 progress = viewModel.progress
             )
 
             if (viewModel.updateComplete) {
-                // TODO 서식 업데이트 후 메인으로
-                findNavController().navigate(FormUpdateFragmentDirections.actionFormUpdateFragmentToMainFragment())
+               navigate(FormUpdateFragmentDirections.actionFormUpdateFragmentToMainFragment())
             }
         }
+//        baseCompose.surface = {
+//            if (BuildConfig.DEBUG) {
+//                Row {
+//                    FloatingActionButton(onClick = {
+//                        viewModel.updateComplete = true // 임시 테스트
+//                    }) {
+//                        Text("다음화면")
+//                    }
+//                }
+//            }
+//        }
+    }
 
+    private fun startUpdate() {
+        if (!availableNetwork()) {
+            showAlert(getString(R.string.form_update_error_network), getString(R.string.retry)) {
+                Handler(Looper.getMainLooper()).postDelayed({ startUpdate() }, 100)
+            }
+        } else if (!FileUtils.availableStorage(requireContext(), 200 * 1024 * 1024)) {
+            showAlert(getString(R.string.form_update_error_storage)) {
+                terminateApplication()
+            }
+        } else {
+            viewModel.startUpdate()
+        }
+    }
+
+    private fun showAlert(
+        message: String,
+        rightBtnText: String = getString(R.string.confirm),
+        onDismissRequest: (state: PopupState) -> Unit = {}
+    ) {
+        showAlertDialog(
+            contentText = message,
+            rightBtnText = rightBtnText,
+            onDismissRequest = onDismissRequest
+        )
     }
 
     @Preview(widthDp = 1280, heightDp = 800)
@@ -121,10 +147,11 @@ class FormUpdateFragment : BaseFragment() {
 
                 Column(
                     modifier = Modifier
+                        .padding(horizontal = 20.dp)
                         .border(
                             width = 1.dp,
                             color = MaterialTheme.colors.disableColor,
-                            shape = RoundedCornerShape(16.dp)
+                            shape = RoundedCornerShape(0.dp)
                         )
                         .padding(top = 16.dp, start = 48.dp, end = 48.dp, bottom = 24.dp)
                         .align(Alignment.CenterHorizontally),
@@ -169,7 +196,7 @@ class FormUpdateFragment : BaseFragment() {
                         ) {
                             Text(
                                 text = stringResource(
-                                    id = R.string.app_update_ing,
+                                    id = R.string.form_update_ing,
                                     current,
                                     total
                                 ),

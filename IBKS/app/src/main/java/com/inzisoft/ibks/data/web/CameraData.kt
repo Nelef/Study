@@ -6,7 +6,6 @@ import java.io.Serializable
 data class AuthCameraData(
     @SerializedName("cameraType") val cameraType: String,
     @SerializedName("takeType") val takeType: String,
-    @SerializedName("docCode") val docCode: String? = "",
     @SerializedName("requireIssueDate") val requireIssueDate: String,
     @SerializedName("requireIssueOffice") val requireIssueOffice: String
 ) : Serializable {

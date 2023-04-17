@@ -32,6 +32,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import com.inzisoft.ibks.R
 import com.inzisoft.ibks.databinding.ActivitySecureKeypadBinding
+import com.inzisoft.ibks.util.log.QLog
 import com.inzisoft.ibks.view.compose.defaultGuideTextStyle
 import com.inzisoft.ibks.view.compose.theme.IBKSTheme
 import com.inzisoft.ibks.view.compose.theme.background1Color
@@ -49,6 +50,8 @@ class SecureKeypadActivity : AppCompatActivity() {
         const val ARGS_MAX_LENGTH = "args_max_length"
         const val RESULT_ENC = "result_enc"
         const val RESULT_STR = "result_str"
+        const val RESULT_ENC_HASH = "result_enc_hash"
+        const val RESULT_DEC_PART = "result_dec_part"
     }
 
     val viewModel: SecureKeypadViewModel by viewModels()
@@ -100,11 +103,12 @@ class SecureKeypadActivity : AppCompatActivity() {
             onTextChanged = {
                 viewModel.onInputChange(it)
             },
-            onConfirm = { onResult(it) }
+            onConfirm = { realText, hashText ->
+                onResult(realText, hashText) }
         )
     }
 
-    private fun onResult(data: ByteArray?) {
+    private fun onResult(data: ByteArray?, data2: String?) {
         viewModel.encrypt(data) { encryptResult ->
             if (encryptResult == null) {
                 setResult(RESULT_CANCELED)
@@ -113,8 +117,11 @@ class SecureKeypadActivity : AppCompatActivity() {
                     RESULT_OK, Intent()
                         .putExtra(RESULT_ENC, encryptResult)
                         .putExtra(RESULT_STR, viewModel.input)
+                        .putExtra(RESULT_DEC_PART, viewModel.decPart)
+                        .putExtra(RESULT_ENC_HASH, data2)
                 )
             }
+            QLog.i("encryptResult : $encryptResult")
             finish()
         }
     }
@@ -124,6 +131,7 @@ class SecureKeypadActivity : AppCompatActivity() {
         SecureKeyPad.onConfigurationChanged()
     }
 
+    @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
         // Back 키를 막는다.
     }
@@ -176,7 +184,7 @@ class SecureKeypadActivity : AppCompatActivity() {
                     modifier = Modifier.weight(1f)
                 )
                 IconButton(
-                    onClick = { SecureKeyPad.finish() },
+                    onClick = { finish() },
                     modifier = Modifier.size(80.dp)
                 ) {
                     Image(

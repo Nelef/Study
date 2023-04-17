@@ -6,13 +6,14 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewModelScope
 import com.inzisoft.ibks.base.BaseViewModel
 import com.inzisoft.ibks.base.UiState
+import com.inzisoft.ibks.data.remote.UpdateFormDataSource
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class FormUpdateViewModel @Inject constructor() :
+class FormUpdateViewModel @Inject constructor(private val updateFormDataSource: UpdateFormDataSource) :
     BaseViewModel() {
 
     var uiState: UiState<Boolean> by mutableStateOf(UiState.None)
@@ -22,24 +23,21 @@ class FormUpdateViewModel @Inject constructor() :
     var progress: Float by mutableStateOf(0.0f)
 
     fun startUpdate() = viewModelScope.launch(Dispatchers.IO) {
-        // TODO 폼 업데이트 api 생성 후 작업
-        updateComplete = true
-
-//        formUpdateRepository.update().collect { state ->
-//            when (state) {
-//                is FormUpdateRepository.UpdateFormState.OnError -> uiState =
-//                    UiState.Error(state.message)
-//                is FormUpdateRepository.UpdateFormState.OnProgress -> {
-//                    progress = state.progress
-//                }
-//                is FormUpdateRepository.UpdateFormState.OnStart -> {
-//                    current = state.currentCount
-//                    total = state.totalCount
-//                }
-//                FormUpdateRepository.UpdateFormState.OnUpdateComplete -> updateComplete = true
-//                else -> {}
-//            }
-//        }
+        updateFormDataSource.update().collect { state ->
+            when (state) {
+                is UpdateFormDataSource.UpdateFormState.OnError -> uiState =
+                    UiState.Error(state.message)
+                is UpdateFormDataSource.UpdateFormState.OnProgress -> {
+                    progress = state.progress
+                }
+                is UpdateFormDataSource.UpdateFormState.OnStart -> {
+                    current = state.currentCount
+                    total = state.totalCount
+                }
+                UpdateFormDataSource.UpdateFormState.OnUpdateComplete -> updateComplete = true
+                else -> {}
+            }
+        }
     }
 
 }

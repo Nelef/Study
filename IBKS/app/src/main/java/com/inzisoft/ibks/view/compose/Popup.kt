@@ -1,29 +1,24 @@
 package com.inzisoft.ibks.view.compose
 
 import android.os.Message
-import android.util.Log
-import android.webkit.WebChromeClient
-import android.webkit.WebSettings
-import android.webkit.WebView
-import android.webkit.WebViewClient
+import android.webkit.*
 import androidx.compose.animation.*
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.*
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
@@ -33,12 +28,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.*
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.window.*
+import com.google.gson.Gson
+import com.inzisoft.ibks.BuildConfig
 import com.inzisoft.ibks.R
+import com.inzisoft.ibks.data.web.ElectronicData
+import com.inzisoft.ibks.data.web.ElectronicDocInfo
 import com.inzisoft.ibks.view.compose.theme.*
+import java.io.File
 
 @Preview(device = Devices.AUTOMOTIVE_1024p)
 @Composable
@@ -72,7 +71,7 @@ fun PreviewPopupScreen() {
                 contentText = buildAnnotatedString { append("팝업 세부 내용을 입력하세요. 팝업 세부 내용을 입력하세요. 팝업 세부 내용을 입력하세요. 팝업 세부 내용을 입력하세요. 팝업 세부 내용을 입력하세요.") },
                 rightBtnText = "확인",
                 onRightBtnClick = {},
-                buttons = 1,
+                buttonStyle = ButtonStyle.Dialog
             )
 
             AlertDialogContent(
@@ -85,6 +84,219 @@ fun PreviewPopupScreen() {
         }
     }
 
+}
+
+@Composable
+fun TextPopup(
+    content: String,
+    onCancel: () -> Unit,
+    onConfirm: () -> Unit
+) {
+    Popup(
+        popupPositionProvider = WindowCenterOffsetPositionProvider(),
+        onDismissRequest = { },
+        properties = PopupProperties(
+            dismissOnBackPress = false,
+            dismissOnClickOutside = false
+        )
+    ) {
+
+        Card(
+            modifier = Modifier
+                .fillMaxSize()
+                .shadow(elevation = 2.dp),
+            shape = RoundedCornerShape(0.dp),
+            backgroundColor = MaterialTheme.colors.background1Color
+        ) {
+            Column {
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(
+                            start = 24.dp,
+                            top = 36.dp,
+                            end = 24.dp,
+                            bottom = 36.dp
+                        )
+                        .verticalScroll(rememberScrollState())
+                ) {
+                    Text(
+                        text = content,
+                        style = MaterialTheme.typography.subtitle1,
+                    )
+                }
+
+                Row(
+                    Modifier.height(60.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    GrayDialogButton(
+                        onClick = onCancel,
+                        text = stringResource(id = R.string.cancel),
+                        buttonStyle = ButtonStyle.Basic,
+                        modifier = Modifier.weight(1f),
+                    )
+
+                    ColorDialogButton(
+                        onClick = onConfirm,
+                        text = stringResource(id = R.string.confirm),
+                        buttonStyle = ButtonStyle.Basic,
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Preview(widthDp = 1280, heightDp = 800)
+@Composable
+fun PreviewTestElectronicPopup() {
+    TestElectronicPopup(visible = true, onClosed = { }, onConfirm = {})
+}
+
+@Composable
+fun TestElectronicPopup(
+    visible: Boolean,
+    onClosed: () -> Unit,
+    onConfirm: (json: String) -> Unit
+) {
+    val electronicData = remember { mutableStateOf<ElectronicData?>(null) }
+    val biz = remember { mutableStateOf("") }
+    val data = remember { mutableStateOf("") }
+
+    val path = "${LocalContext.current.getExternalFilesDir(null)?.absolutePath}/temp.json"
+
+    LaunchedEffect(Unit) {
+        try {
+            if (!File(path).exists()) return@LaunchedEffect
+
+            val json = File(path).readText()
+            electronicData.value = Gson().fromJson(json, ElectronicData::class.java).apply {
+                with(electronicDocInfo) {
+                    if (isNotEmpty()) {
+                        biz.value = this[0].businessLogic
+                        var tmp = ""
+                        this[0].data?.forEach {
+                            tmp += "${it.key}|${it.value}^"
+                        }
+                        data.value = tmp
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            electronicData.value = ElectronicData(null, listOf(), null)
+        }
+    }
+
+    BasicBottomDialog(
+        title = "전자문서 테스트 호출",
+        modifier = Modifier
+            .fillMaxWidth(0.8f)
+            .fillMaxHeight(0.7f),
+        onClose = onClosed,
+        visible = visible
+    ) {
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(20.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+
+            Text(text = "비즈로직")
+
+            OutlinedTextField(
+                value = biz.value,
+                onValueChange = { biz.value = it },
+                shape = RectangleShape,
+                colors = TextFieldDefaults.outlinedTextFieldColors(
+                    backgroundColor = MaterialTheme.colors.unfocusedColor,
+                    focusedBorderColor = MaterialTheme.colors.point1Color,
+                    cursorColor = MaterialTheme.colors.point1Color
+                )
+            )
+        }
+
+        Row(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .padding(20.dp)
+        ) {
+
+            Text(text = "매핑데이터")
+
+            OutlinedTextField(
+                value = data.value,
+                onValueChange = { data.value = it },
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight(),
+                shape = RectangleShape,
+                colors = TextFieldDefaults.outlinedTextFieldColors(
+                    backgroundColor = MaterialTheme.colors.unfocusedColor,
+                    focusedBorderColor = MaterialTheme.colors.point1Color,
+                    cursorColor = MaterialTheme.colors.point1Color
+                )
+            )
+        }
+
+        Column(modifier = Modifier.fillMaxWidth()) {
+            Row(
+                Modifier.height(60.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                GrayDialogButton(
+                    onClick = onClosed,
+                    text = "취소",
+                    modifier = Modifier.weight(1f)
+                )
+                ColorDialogButton(
+                    onClick = {
+                        val d = data.value
+                        val map = mutableMapOf<String, String>()
+                        d.split("^").forEach {
+                            val dd = it.split("|")
+                            if (dd.size < 2) return@forEach
+
+                            map[dd[0]] = dd[1]
+                        }
+
+                        val json = Gson().toJson(
+                            ElectronicData(
+                                null,
+                                listOf(
+                                    ElectronicDocInfo(
+                                        openType = "normal",
+                                        businessLogic = biz.value.trim(),
+                                        penSealImg = listOf(),
+                                        title = "",
+                                        appendForm = listOf(),
+                                        productCode = "",
+                                        data = map,
+                                        tFieldIdForWeb = listOf()
+                                    )
+                                ),
+                                null
+                            )
+                        )
+
+                        File(path).delete()
+                        File(path).writeText(json)
+
+                        onConfirm(json)
+                    },
+                    text = "확인",
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        }
+    }
 }
 
 @Preview(device = Devices.AUTOMOTIVE_1024p, showBackground = true, backgroundColor = 0xFFFFFF)
@@ -131,7 +343,7 @@ fun BasicBottomDialog(
     onClose: () -> Unit,
     shape: Shape = RoundedCornerShape(0.dp),
     visible: Boolean,
-    content: @Composable () -> Unit
+    content: @Composable ColumnScope.() -> Unit
 ) {
     BottomPopupScope.Transition(visible = visible) {
         Column(
@@ -172,7 +384,7 @@ fun BasicBottomDialog(
                 modifier = Modifier
                     .height(1.dp)
                     .fillMaxWidth(),
-                color = DividerColor
+                color = Divider1Color
             )
             content()
         }
@@ -190,7 +402,7 @@ fun BasicDialog(
     rightBtnText: String,
     onRightBtnClick: () -> Unit,
     onDismissRequest: () -> Unit = {},
-    properties: DialogProperties = DialogProperties(
+    properties: PopupProperties = PopupProperties(
         dismissOnBackPress = false,
         dismissOnClickOutside = false
     )
@@ -220,12 +432,16 @@ fun BasicDialog(
     rightBtnText: String,
     onRightBtnClick: () -> Unit,
     onDismissRequest: () -> Unit = {},
-    properties: DialogProperties = DialogProperties(
+    properties: PopupProperties = PopupProperties(
         dismissOnBackPress = false,
         dismissOnClickOutside = false
     )
 ) {
-    Dialog(onDismissRequest = onDismissRequest, properties = properties) {
+    Popup(
+        popupPositionProvider = WindowCenterOffsetPositionProvider(),
+        onDismissRequest = onDismissRequest,
+        properties = properties
+    ) {
         BasicDialogContent(
             modifier,
             titleText,
@@ -237,6 +453,7 @@ fun BasicDialog(
             onRightBtnClick
         )
     }
+
 }
 
 @Composable
@@ -249,11 +466,12 @@ fun BasicDialogContent(
     onLeftBtnClick: () -> Unit = {},
     rightBtnText: String,
     onRightBtnClick: () -> Unit,
-    buttons: Number = 2,
+    buttonStyle: ButtonStyle = ButtonStyle.Basic,
 ) {
     Card(
         modifier = Modifier
-            .defaultMinSize(minWidth = 360.dp, minHeight = 212.dp)
+            .requiredSizeIn(minWidth = 360.dp, minHeight = 212.dp, maxWidth = 800.dp)
+            .padding(20.dp)
             .shadow(elevation = 2.dp)
             .composed { modifier },
         shape = RoundedCornerShape(0.dp),
@@ -321,7 +539,7 @@ fun BasicDialogContent(
                     GrayDialogButton(
                         onClick = onLeftBtnClick,
                         text = leftBtnText,
-                        buttons = buttons,
+                        buttonStyle = buttonStyle,
                         modifier = Modifier.weight(1f),
                     )
                 }
@@ -329,7 +547,7 @@ fun BasicDialogContent(
                 ColorDialogButton(
                     onClick = onRightBtnClick,
                     text = rightBtnText,
-                    buttons = buttons,
+                    buttonStyle = buttonStyle,
                     modifier = Modifier.weight(1f),
                 )
             }
@@ -346,7 +564,7 @@ fun AlertDialog(
     rightBtnText: String = stringResource(id = R.string.confirm),
     onRightBtnClick: () -> Unit,
     onDismissRequest: () -> Unit = {},
-    properties: DialogProperties = DialogProperties(
+    properties: PopupProperties = PopupProperties(
         dismissOnBackPress = false,
         dismissOnClickOutside = false
     )
@@ -372,12 +590,16 @@ fun AlertDialog(
     rightBtnText: String = stringResource(id = R.string.confirm),
     onRightBtnClick: () -> Unit,
     onDismissRequest: () -> Unit = {},
-    properties: DialogProperties = DialogProperties(
+    properties: PopupProperties = PopupProperties(
         dismissOnBackPress = false,
         dismissOnClickOutside = false
     )
 ) {
-    Dialog(onDismissRequest = onDismissRequest, properties = properties) {
+    Popup(
+        popupPositionProvider = WindowCenterOffsetPositionProvider(),
+        onDismissRequest = onDismissRequest,
+        properties = properties
+    ) {
         AlertDialogContent(
             modifier,
             contentText,
@@ -385,6 +607,23 @@ fun AlertDialog(
             onLeftBtnClick,
             rightBtnText,
             onRightBtnClick
+        )
+    }
+}
+
+class WindowCenterOffsetPositionProvider(
+    private val x: Int = 0,
+    private val y: Int = 0
+) : PopupPositionProvider {
+    override fun calculatePosition(
+        anchorBounds: IntRect,
+        windowSize: IntSize,
+        layoutDirection: LayoutDirection,
+        popupContentSize: IntSize
+    ): IntOffset {
+        return IntOffset(
+            (windowSize.width - popupContentSize.width) / 2 + x,
+            (windowSize.height - popupContentSize.height) / 2 + y
         )
     }
 }
@@ -397,12 +636,11 @@ fun AlertDialogContent(
     onLeftBtnClick: () -> Unit = {},
     rightBtnText: String = stringResource(id = R.string.confirm),
     onRightBtnClick: () -> Unit,
-    buttons: Number = 2,
+    buttonStyle: ButtonStyle = ButtonStyle.Basic
 ) {
     Card(
         modifier = Modifier
-            .defaultMinSize(minWidth = 360.dp, minHeight = 100.dp)
-            .width(360.dp)
+            .requiredSizeIn(minWidth = 360.dp, minHeight = 100.dp, maxWidth = 500.dp)
             .shadow(elevation = 2.dp)
             .composed { modifier },
         shape = RoundedCornerShape(0.dp),
@@ -424,7 +662,7 @@ fun AlertDialogContent(
             ) {
                 Text(
                     text = content,
-                    style = MaterialTheme.typography.subtitle1,
+                    style = MaterialTheme.typography.h5,
                     textAlign = TextAlign.Center
                 )
             }
@@ -438,7 +676,7 @@ fun AlertDialogContent(
                     GrayDialogButton(
                         onClick = onLeftBtnClick,
                         text = leftBtnText,
-                        buttons = buttons,
+                        buttonStyle = buttonStyle,
                         modifier = Modifier.weight(1f),
                     )
                 }
@@ -446,7 +684,7 @@ fun AlertDialogContent(
                 ColorDialogButton(
                     onClick = onRightBtnClick,
                     text = rightBtnText,
-                    buttons = buttons,
+                    buttonStyle = buttonStyle,
                     modifier = Modifier.weight(1f),
                 )
             }
@@ -457,13 +695,13 @@ fun AlertDialogContent(
 @Preview
 @Composable
 fun PreviewWebViewDialog() {
-    WebViewDialog(resultMsg = null) {}
+    WebViewDialog(resultMsg = null, cookieData = "") {}
 }
 
 @Composable
-fun WebViewDialog(resultMsg: Message?, onClosed: () -> Unit) {
-    val webViewLoading = remember { mutableStateOf(false) }
-    val webViewDestroy = remember { mutableStateOf(false) }
+fun WebViewDialog(resultMsg: Message?, cookieData: String, onClosed: () -> Unit) {
+    var webViewLoading by remember { mutableStateOf(false) }
+    var webViewDestroy by remember { mutableStateOf(false) }
 
     Dialog(
         properties = DialogProperties(
@@ -471,7 +709,7 @@ fun WebViewDialog(resultMsg: Message?, onClosed: () -> Unit) {
             dismissOnClickOutside = false
         ),
         onDismissRequest = {
-            webViewDestroy.value = true
+            webViewDestroy = true
         }) {
         Card(
             shape = RoundedCornerShape(0.dp),
@@ -509,7 +747,7 @@ fun WebViewDialog(resultMsg: Message?, onClosed: () -> Unit) {
                     )
 
                     IconButton(
-                        onClick = { webViewDestroy.value = true },
+                        onClick = { webViewDestroy = true },
                         modifier = Modifier.size(40.dp)
                     ) {
                         Image(
@@ -520,50 +758,58 @@ fun WebViewDialog(resultMsg: Message?, onClosed: () -> Unit) {
                 }
 
                 Box {
-                    AndroidView(
-                        modifier = Modifier.fillMaxSize(),
-                        factory = { context ->
-                            WebView(context).apply {
+                    if (LocalInspectionMode.current)
+                        Box(modifier = Modifier.fillMaxSize())
+                    else
+                        AndroidView(
+                            modifier = Modifier.fillMaxSize(),
+                            factory = { context ->
+                                WebView(context).apply {
+                                    settings.apply {
+                                        javaScriptEnabled = true
+                                        cacheMode = WebSettings.LOAD_NO_CACHE
+                                    }
+                                    webViewClient = WebViewClient()
+                                    webChromeClient = object : WebChromeClient() {
 
-                                settings.apply {
-                                    javaScriptEnabled = true
-                                    cacheMode = WebSettings.LOAD_NO_CACHE
+                                        override fun onProgressChanged(
+                                            view: WebView?,
+                                            newProgress: Int
+                                        ) {
+                                            super.onProgressChanged(view, newProgress)
+
+                                            webViewLoading = newProgress != 100
+                                        }
+
+                                        override fun onReceivedTitle(view: WebView?, t: String?) {
+                                            title.value = t ?: ""
+                                        }
+
+                                        override fun onCloseWindow(window: WebView?) {
+                                            webViewDestroy = true
+                                        }
+                                    }
+                                    CookieManager.getInstance().setAcceptCookie(true)
+                                    CookieManager.getInstance().setCookie(
+                                        "${BuildConfig.WEB_PROTOCOL}://${BuildConfig.API_SERVER_URL}",
+                                        cookieData
+                                    )
+                                    CookieManager.getInstance()
+                                        .setAcceptThirdPartyCookies(this, true)
+                                }.also {
+                                    val transport = resultMsg?.obj as? WebView.WebViewTransport
+                                    transport?.webView = it
+                                    resultMsg?.sendToTarget()
                                 }
-                                webViewClient = WebViewClient()
-                                webChromeClient = object : WebChromeClient() {
-
-                                    override fun onProgressChanged(
-                                        view: WebView?,
-                                        newProgress: Int
-                                    ) {
-                                        super.onProgressChanged(view, newProgress)
-
-                                        webViewLoading.value = newProgress != 100
-                                        Log.i("jhkim", "$newProgress")
-                                    }
-
-                                    override fun onReceivedTitle(view: WebView?, t: String?) {
-                                        title.value = t ?: ""
-                                    }
-
-                                    override fun onCloseWindow(window: WebView?) {
-                                        webViewDestroy.value = true
-                                    }
+                            }, update = {
+                                if (webViewDestroy) {
+                                    it.destroy()
+                                    onClosed.invoke()
                                 }
-                            }.also {
-                                val transport = resultMsg?.obj as? WebView.WebViewTransport
-                                transport?.webView = it
-                                resultMsg?.sendToTarget()
-                            }
-                        }, update = {
-                            if (webViewDestroy.value) {
-                                it.destroy()
-                                onClosed.invoke()
-                            }
-                        })
+                            })
 
 
-                    if (webViewLoading.value) {
+                    if (webViewLoading) {
                         LoadingImage(modifier = Modifier.align(Alignment.Center))
                     }
                 }

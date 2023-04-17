@@ -15,6 +15,7 @@ import com.inzisoft.ibks.data.internal.CameraConfig
 import com.inzisoft.mobile.recogdemolib.CameraPreviewInterface
 import com.inzisoft.mobile.view.overlay.CameraOverlayView
 import com.inzisoft.ibks.data.repository.LocalRepository
+import com.inzisoft.ibks.data.repository.CameraRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -22,8 +23,9 @@ import kotlinx.coroutines.launch
 open class CameraViewModel constructor(
     context: Context,
     savedStateHandle: SavedStateHandle,
-    localRepository: LocalRepository
-) : AuthViewModel(context, savedStateHandle, localRepository) {
+    localRepository: LocalRepository,
+    cameraRepository: CameraRepository
+) : AuthViewModel(context, savedStateHandle, cameraRepository, localRepository) {
     var cameraState by mutableStateOf<CameraState>(CameraState.CameraPreviewState)
     val config: CameraConfig by lazy { getCameraConfig() }
     var cameraPreviewInterface: CameraPreviewInterface? = null
@@ -70,13 +72,13 @@ open class CameraViewModel constructor(
         cameraPreviewInterface!!.onResume(true)
     }
 
-    open fun getCameraConfig(): CameraConfig { return CameraConfig(-1, 0,"") }
+    open fun getCameraConfig(): CameraConfig { return CameraConfig(-1, 0,"", false) }
     open fun createCameraInterfaceConfig(activity: Activity) {
         cameraPreviewInterface = CameraPreviewInterface(activity, moveToRecognizeActivityListener)
         cameraPreviewInterface!!.setPictureDesireResolution(config.pictureDesireResolution)
         cameraPreviewInterface!!.setRecogType(config.recogType)
         cameraPreviewInterface!!.setStartCameraFailedListener(startCameraFailedListener)
-        cameraPreviewInterface!!.setPreviewPictureRecogEnable(false)
+        cameraPreviewInterface!!.setPreviewPictureRecogEnable(config.isPreviewMode)
         cameraPreviewInterface!!.setAutoCaptureEnable(false)
     }
 
@@ -86,8 +88,8 @@ open class CameraViewModel constructor(
     fun retake() {
         authDataState.dataMap.clear()
         authDataState.idCardBitmap?.recycle()
+        authDataState.faceImage = null
         cameraResume()
-        cameraState = CameraState.CameraPreviewState
     }
 
     fun cameraPause() {

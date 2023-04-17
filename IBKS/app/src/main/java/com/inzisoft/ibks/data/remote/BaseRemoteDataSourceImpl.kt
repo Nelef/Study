@@ -1,10 +1,12 @@
 package com.inzisoft.ibks.data.remote
 
 import com.google.gson.Gson
+import com.inzisoft.ibks.ErrorStatus
 import com.inzisoft.ibks.ExceptionCode
 import com.inzisoft.ibks.data.remote.converter.CryptoService
 import com.inzisoft.ibks.data.remote.model.ApiResponse
 import com.inzisoft.ibks.data.remote.model.ApiResult
+import com.inzisoft.ibks.data.repository.LocalRepository
 import dagger.hilt.android.scopes.ViewModelScoped
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -16,11 +18,15 @@ import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import okhttp3.ResponseBody
 import retrofit2.Response
-import java.net.ConnectException
+import java.io.IOException
+import java.net.SocketTimeoutException
 import javax.inject.Inject
 
 @ViewModelScoped
-open class BaseRemoteDataSourceImpl @Inject constructor(private val cryptoService: CryptoService): BaseRemoteDataSource {
+open class BaseRemoteDataSourceImpl @Inject constructor(
+    private val cryptoService: CryptoService,
+    private val localRepository: LocalRepository
+) : BaseRemoteDataSource {
 
     @Suppress("UNCHECKED_CAST")
     override suspend fun <T> apiCall(request: suspend () -> Response<ApiResponse<T>>): Flow<ApiResult<T>> =
@@ -30,9 +36,8 @@ open class BaseRemoteDataSourceImpl @Inject constructor(private val cryptoServic
             val response = request()
             emit(
                 if (response.isSuccessful) {
-                    val body = response.body() as? ApiResponse<*> ?: throw NullPointerException(
-                        "Body is empty."
-                    )
+                    val body = response.body() as? ApiResponse<*>
+                        ?: throw NullPointerException("Body is empty.")
 
                     if (body.status == 200) {
                         val headers = response.headers().toMultimap()
@@ -49,8 +54,13 @@ open class BaseRemoteDataSourceImpl @Inject constructor(private val cryptoServic
                     if (errorBody == null) {
                         ApiResult.Error(response.code(), response.message())
                     } else {
-                        val body =
-                            Gson().fromJson(errorBody.charStream(), ApiResponse::class.java)
+                        val body = Gson().fromJson(errorBody.charStream(), ApiResponse::class.java)
+
+                        if (response.code() == 401 && body.status == ErrorStatus.ERROR_STATUS_INVALID_TOKEN) {
+                            localRepository.clearAccessToken()
+                            return@flow
+                        }
+
                         ApiResult.Error(body.status, body.message)
                     }
                 }
@@ -60,7 +70,10 @@ open class BaseRemoteDataSourceImpl @Inject constructor(private val cryptoServic
                 emit(handleException(e))
             }
 
-    override suspend fun download(needDecrypt: Boolean, request: suspend () -> Response<ResponseBody>): Flow<ApiResult<ByteArray>> =
+    override suspend fun download(
+        needDecrypt: Boolean,
+        request: suspend () -> Response<ResponseBody>
+    ): Flow<ApiResult<ByteArray>> =
         flow {
             emit(ApiResult.Loading())
 
@@ -76,7 +89,20 @@ open class BaseRemoteDataSourceImpl @Inject constructor(private val cryptoServic
                         ApiResult.Success(body.bytes(), headers)
                     }
                 } else {
-                    ApiResult.Error(response.code(), response.message())
+                    val errorBody = response.errorBody()
+
+                    if (errorBody == null) {
+                        ApiResult.Error(response.code(), response.message())
+                    } else {
+                        val body = Gson().fromJson(errorBody.charStream(), ApiResponse::class.java)
+
+                        if (response.code() == 401 && body.status == ErrorStatus.ERROR_STATUS_INVALID_TOKEN) {
+                            localRepository.clearAccessToken()
+                            return@flow
+                        }
+
+                        ApiResult.Error(response.code(), response.message())
+                    }
                 }
             )
 
@@ -87,10 +113,27 @@ open class BaseRemoteDataSourceImpl @Inject constructor(private val cryptoServic
             }
 
     private fun <T> handleException(e: Throwable): ApiResult.Error<T> {
-        return if (e is ConnectException) {
-            ApiResult.Error(ExceptionCode.EXCEPTION_CODE_INTERNAL_CONNECTION, e.message ?: "connection fail", exception = e)
+        // TODO Firebase
+//        Firebase.crashlytics.recordException(e)
+
+        return if (e is IOException) {
+            ApiResult.Error(
+                ExceptionCode.EXCEPTION_CODE_INTERNAL_CONNECTION,
+                e.message ?: "connection fail",
+                exception = e
+            )
+        } else if(e is SocketTimeoutException) {
+            ApiResult.Error(
+                ExceptionCode.Exception_CODE_SOCKET_TIMEOUT,
+                e.message ?: "socket timeout",
+                exception = e
+            )
         } else {
-            ApiResult.Error(ExceptionCode.EXCEPTION_CODE_INTERNAL_UNKNOWN, e.message ?: "unknown", exception = e)
+            ApiResult.Error(
+                ExceptionCode.EXCEPTION_CODE_INTERNAL_UNKNOWN,
+                e.message ?: "unknown",
+                exception = e
+            )
         }
     }
 
@@ -108,7 +151,11 @@ open class BaseRemoteDataSourceImpl @Inject constructor(private val cryptoServic
         return MultipartBody.Part.createFormData(name, fileName, requestBody)
     }
 
-    override fun toMultipartJson(name: String, data: String, isEncrypt: Boolean): MultipartBody.Part {
+    override fun toMultipartJson(
+        name: String,
+        data: String,
+        isEncrypt: Boolean
+    ): MultipartBody.Part {
         val requestBody = RequestBody.create(
             MediaType.parse("application/json"),
             if (isEncrypt) cryptoService.encrypt(data.toByteArray()) else data.toByteArray()

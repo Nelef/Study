@@ -5,8 +5,10 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
 class DownCounter(val scope: CoroutineScope) {
-    var time = 7L * 60
-    var interval = 1000L
+    companion object {
+        private const val TIME = 3L * 60
+        private const val INTERVAL = 1000L
+    }
 
     private var timerJob: Job? = null
     private val mutex = Mutex()
@@ -22,13 +24,13 @@ class DownCounter(val scope: CoroutineScope) {
         timerJob?.cancel()
         timerJob = scope.launch(Dispatchers.IO) {
             mutex.lock()
-            t = time
+            t = TIME
             mutex.unlock()
 
             while (true) {
-                if (t <= 0L) break
+                if (t < 0L) break
 
-                delay(interval)
+                delay(INTERVAL)
                 tick(mutex.withLock {
                     t--
                 })

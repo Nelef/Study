@@ -15,13 +15,15 @@ import com.inzisoft.ibks.data.internal.DocImageData
 import com.inzisoft.ibks.data.internal.DocInfoData
 import com.inzisoft.mobile.data.RecognizeResult
 import com.inzisoft.ibks.data.repository.LocalRepository
+import com.inzisoft.ibks.data.repository.CameraRepository
 
 abstract class BaseNormalCameraViewModel constructor(
     context: Context,
     savedStateHandle: SavedStateHandle,
     private val pathManager: PathManager,
     localRepository: LocalRepository,
-) : CameraViewModel(context, savedStateHandle, localRepository) {
+    cameraRepository: CameraRepository,
+) : CameraViewModel(context, savedStateHandle, localRepository, cameraRepository) {
 
     var imageData by mutableStateOf<Bitmap?>(null)
 //    var imageFileList = mutableListOf<String>()
@@ -61,8 +63,7 @@ abstract class BaseNormalCameraViewModel constructor(
                 realImagePath = realImageFilePath
             )
         )
-//        imageFileList.add(imageFilePath)
-        Log.e("SW_DEBUG"," imageCount: " + imageIndex + " // max : " + imageMaxCount)
+
         imageData = origin
         imageIndex++
         if (imageIndex < imageMaxCount) {
@@ -86,8 +87,12 @@ abstract class BaseNormalCameraViewModel constructor(
         }
     }
 
+    /**
+     * Doc의 Cache 이미지 파일 및 데이터를 모두 삭제한다.
+     */
     fun clearAllImage() {
         for (docImageData in docInfoData.docImageDataList) {
+            // 이미지 파일 삭제.
             docImageData.clearImage()
         }
         docInfoData.docImageDataList.clear()

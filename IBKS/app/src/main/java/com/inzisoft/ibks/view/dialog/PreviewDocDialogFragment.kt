@@ -6,6 +6,7 @@ import android.view.ViewGroup
 import android.widget.RelativeLayout
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.*
@@ -18,17 +19,22 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.graphics.drawable.toBitmap
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
-import com.bumptech.glide.request.RequestOptions
+import com.davemorrissey.labs.subscaleview.ImageSource
+import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.rememberPagerState
@@ -36,6 +42,8 @@ import com.inzisoft.ibks.*
 import com.inzisoft.ibks.R
 import com.inzisoft.ibks.base.BaseDialogFragment
 import com.inzisoft.ibks.base.BaseDialogFragmentViewModel
+import com.inzisoft.ibks.base.PopupState
+import com.inzisoft.ibks.base.Right
 import com.inzisoft.ibks.view.compose.*
 import com.inzisoft.ibks.view.compose.theme.*
 import com.inzisoft.ibks.view.overlayviews.CustomMaskingCanvasView
@@ -47,6 +55,7 @@ import com.inzisoft.mobile.util.CommonUtils
 import com.inzisoft.mobile.view.MaskingCanvasView
 import com.inzisoft.mobile.view.MaskingCanvasView.RectData
 import com.skydoves.landscapist.glide.GlideImage
+import com.skydoves.landscapist.glide.GlideImageState
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
@@ -67,7 +76,7 @@ class PreviewDocDialogFragment : BaseDialogFragment() {
                 },
                 showCompleteBtn = viewModel.previewDocType != PreviewDocType.PREVIEW_DOC
             ) {
-                viewModel.sendDocImageToServer()
+                viewModel.complete()
             }
         }
 
@@ -254,19 +263,23 @@ class PreviewDocDialogFragment : BaseDialogFragment() {
         baseCompose.surface = {
             when (val dialogUiState = viewModel.dialogUiState) {
                 is DialogUiState.DeleteImageAlertDialog -> {
-                    AlertDialog(
-                        contentText = stringResource(id = R.string.delete_image_popup),
-                        leftBtnText = stringResource(id = R.string.no),
-                        onLeftBtnClick = { viewModel.dialogUiState = DialogUiState.None },
-                        rightBtnText = stringResource(id = R.string.yes),
-                        onRightBtnClick = {
-                            viewModel.deleteCurrentImage()
-                        })
+                    ShowAlertDialog(
+                        contentText = R.string.delete_image_popup,
+                        leftBtnText = R.string.no,
+                        rightBtnText = R.string.yes,
+                        onDismissRequest = { state: PopupState ->
+                            when (state) {
+                                Right -> viewModel.deleteCurrentImage()
+                                else -> viewModel.dialogUiState = DialogUiState.None
+                            }
+                        }
+                    )
                 }
                 is DialogUiState.SendSuccessDialog -> {
-                    AlertDialog(
-                        contentText = stringResource(id = R.string.camera_complete),
-                        onRightBtnClick = {
+                    ShowAlertDialog(
+                        contentText = R.string.camera_complete,
+                        rightBtnText = R.string.confirm,
+                        onDismissRequest = {
                             viewModel.dialogUiState = DialogUiState.None
                             setFragmentResult(
                                 FragmentRequest.PreviewDoc,
@@ -277,26 +290,21 @@ class PreviewDocDialogFragment : BaseDialogFragment() {
                     )
                 }
                 is DialogUiState.ImageAllRemovedDialog -> {
-                    Log.e("SW_DEBUG", "PreviewDocState.ImageAllRemoved")
-                    AlertDialog(
-                        contentText = stringResource(id = R.string.empty_image),
-                        onRightBtnClick = {
+                    ShowAlertDialog(
+                        contentText = R.string.empty_image,
+                        rightBtnText = R.string.confirm,
+                        onDismissRequest = {
                             viewModel.dialogUiState = DialogUiState.None
                             cancel()
                         }
                     )
                 }
                 is DialogUiState.SendFailedDialog -> {
-                    BasicDialog(
+                    ShowBasicDialog(
                         titleText = stringResource(id = R.string.send_doc_fail_popup_title),
-                        contentText = buildAnnotatedString {
-                            append(dialogUiState.message)
-                        },
+                        contentText = dialogUiState.message,
                         rightBtnText = stringResource(id = R.string.confirm),
-                        onRightBtnClick = {
-                            viewModel.dialogUiState = DialogUiState.None
-                        },
-                        onClosed = {
+                        onDismissRequest = {
                             viewModel.dialogUiState = DialogUiState.None
                         }
                     )
@@ -305,31 +313,35 @@ class PreviewDocDialogFragment : BaseDialogFragment() {
                     Loading()
                 }
                 is DialogUiState.MaskingAlertDialog,
-                is DialogUiState.MaskingAddCompleteDialog,
-                is DialogUiState.MaskingRemoveCompleteDialog -> {
+                is DialogUiState.MaskingAddCompleteDialog -> {
                     val contentText = when(dialogUiState) {
                         is DialogUiState.MaskingAlertDialog -> R.string.nomasking_alert
-                        is DialogUiState.MaskingAddCompleteDialog -> R.string.masking_add_compelete
-                        else -> R.string.masking_remove_compelete
+                        else -> {
+                            viewModel.masked = true
+                            R.string.masking_add_compelete
+                        }
                     }
-                    AlertDialog(
-                        contentText = stringResource(id = contentText),
-                        onRightBtnClick = {
+                    ShowAlertDialog(
+                        contentText = contentText,
+                        rightBtnText = R.string.confirm,
+                        onDismissRequest = {
                             viewModel.dialogUiState = DialogUiState.None
                         }
                     )
                 }
+                else -> {}
             }
 
             when(val previewDocState = viewModel.previewDocState) {
                 is PreviewDocState.Masking -> {
                     val maskedBitmap = applyMasks(previewDocState.bitmap)
-                    previewDocState.docImageData.saveMaskedImageFile(
-                        context = requireContext(),
-                        maskedBitmap = maskedBitmap
-                    )
+                    if(maskedBitmap != null) {
+                        viewModel.saveMaskingImage(requireContext(), previewDocState.docImageData, maskedBitmap)
+                        viewModel.dialogUiState = DialogUiState.MaskingAddCompleteDialog
+                    } else {
+                        viewModel.dialogUiState = DialogUiState.None
+                    }
                     viewModel.previewDocState = PreviewDocState.None
-                    viewModel.dialogUiState = DialogUiState.MaskingAddCompleteDialog
                 }
                 is PreviewDocState.None -> {}
             }
@@ -338,29 +350,24 @@ class PreviewDocDialogFragment : BaseDialogFragment() {
 
     @Composable
     fun ZoomImageView(modifier: Modifier, imagePath: String) {
-        var scale by remember { mutableStateOf(1f) }
-        scale = 1f
-        val transformableState =
-            rememberTransformableState { zoomChange, offsetChange, rotationChange ->
-                if(scale * zoomChange < 1f) {
-                    scale = 1f
-                } else {
-                    scale *= zoomChange
-                }
-            }
-
-
         GlideImage(
-            imageModel = imagePath,
-            modifier = Modifier
-                .then(modifier)
-                .transformable(state = transformableState)
-                .graphicsLayer {
-                    scaleX = scale
-                    scaleY = scale
-                },
-            requestOptions = {
-                RequestOptions().skipMemoryCache(true)
+            imageModel = BitmapFactory.decodeFile(imagePath),
+            modifier = modifier,
+            success = { imageState: GlideImageState.Success ->
+                imageState.drawable?.let { drawable ->
+                    AndroidView(
+                        factory = {
+                            SubsamplingScaleImageView(it).apply {
+                                isZoomEnabled = true
+                                maxScale = 6f
+                                minScale = 1f
+                                setMinimumScaleType(SubsamplingScaleImageView.SCALE_TYPE_START)
+                                setImage(ImageSource.bitmap(drawable.toBitmap()))
+                            }
+                        },
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
             }
         )
     }
@@ -369,7 +376,6 @@ class PreviewDocDialogFragment : BaseDialogFragment() {
     fun MaskingImageView() {
         AndroidView(
             factory = {
-                Log.e("SW_DEBUG", "new MaskingCanvasView factory")
                 val container = RelativeLayout(context).apply {
                     layoutParams = ViewGroup.LayoutParams(
                         ViewGroup.LayoutParams.MATCH_PARENT,
@@ -387,8 +393,6 @@ class PreviewDocDialogFragment : BaseDialogFragment() {
                     null,
                     viewModel.docInfoData!!.maskingYn
                 ).apply {
-                    Log.e("SW_DEBUG", "new MaskingCanvasView: $this")
-
                     adjustViewBounds = true
 
                     if (usableMasking) {
@@ -405,7 +409,6 @@ class PreviewDocDialogFragment : BaseDialogFragment() {
             },
             update = {
                 viewModel.image?.apply {
-                    Log.e("SW_DEBUG", "new MaskingCanvasView image")
                     maskingCanvasView.resetView()
                     maskingCanvasView.setImageBitmap(null)
                     maskingCanvasView.setImageBitmap(
@@ -419,7 +422,11 @@ class PreviewDocDialogFragment : BaseDialogFragment() {
     }
 
     //마스킹 적용
-    private fun applyMasks(bmp: Bitmap): Bitmap {
+    private fun applyMasks(bmp: Bitmap): Bitmap? {
+        if(maskingCanvasView.maskedList.isEmpty()) {
+            return null
+        }
+
         var bitmap: Bitmap = bmp
         val dataList: ArrayList<RectData> = maskingCanvasView.maskedList
         val bitmapWidth = bitmap!!.width

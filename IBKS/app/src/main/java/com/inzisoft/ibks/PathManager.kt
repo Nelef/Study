@@ -1,6 +1,6 @@
 package com.inzisoft.ibks
 
-import com.mobileleader.paperless.ods.PaperlessConstants
+import com.inzisoft.paperless.ods.PaperlessConstants
 import java.io.File
 import java.io.FilenameFilter
 
@@ -29,6 +29,7 @@ class PathManager(
         const val EXT_JPG = ".jpg"
         const val EXT_TIF = ".tif"
         const val EXT_PNG = ".png"
+        const val EXT_MP3 = ".mp3"
         const val EXT_CFG = ".cfg"
         const val EXT_ZIP = ".zip"
     }
@@ -47,8 +48,16 @@ class PathManager(
         const val DIRS = PaperlessConstants.FORM_DIR
     }
 
+    private object Biz {
+        const val DIRS = PaperlessConstants.BUSINESS_LOGIC_DIR
+    }
+
     private object Temp {
         const val DIRS = "temp"
+    }
+
+    private object TempIdCard {
+        const val DIRS = "temp_idcard"
     }
 
     private object Pen {
@@ -71,7 +80,12 @@ class PathManager(
         const val DIRS = "etc"
     }
 
+    private object Record {
+        const val DIRS = "ROV"
+    }
+
     fun getCacheDir() = "$externalCachePath"
+    fun getCacheDir(entryId: String) = "$externalCachePath/$entryId"
 
     /**
      * 로그
@@ -95,30 +109,41 @@ class PathManager(
         "${getRecruiterDir(provId, userId)}/${Recruiter.SIGN_IMAGE}$EXT_PNG"
 
     fun getRecruiterNameImage(entryId: String) =
-        "$externalDocumentsPath/$entryId/${Pen.DIRS}/${Recruiter.NAME_IMAGE}$EXT_PNG"
+        "${getPenImageDir(entryId)}/${Recruiter.NAME_IMAGE}$EXT_PNG"
 
     fun getRecruiterSignImage(entryId: String) =
-        "$externalDocumentsPath/$entryId/${Pen.DIRS}/${Recruiter.SIGN_IMAGE}$EXT_PNG"
+        "${getPenImageDir(entryId)}/${Recruiter.SIGN_IMAGE}$EXT_PNG"
 
     /**
      * 펜
      */
-    fun getPenCacheImagePath(id: String) = "$externalCachePath/${Pen.DIRS}/${id}$EXT_PNG"
-    fun getPenImagePath(entryId: String, id: String) = "$externalDocumentsPath/$entryId/${Pen.DIRS}/$id$EXT_PNG"
+    fun getPenCacheDir() = "$externalCachePath/${Pen.DIRS}"
+    fun getPenCacheImagePath(id: String) = "${getPenCacheDir()}/${id}$EXT_PNG"
+    fun getPenImageDir(entryId: String) = "$externalCachePath/$entryId/${Pen.DIRS}"
+    fun getPenImagePath(entryId: String?, id: String) = entryId?.run {
+        "${getPenImageDir(entryId)}/$id$EXT_PNG"
+    } ?: getPenCacheImagePath(id)
 
+
+    /**
+     * 비즈로직
+     */
+    fun getBizRootDir() = "$externalDownLoadsPath"
+    fun getBizDir() = "${getBizRootDir()}/${Biz.DIRS}"
 
     /**
      * 서식
      */
-    fun getFormRootDir(provId: String) = "$externalDownLoadsPath/$provId"
-    fun getFormDir(provId: String, code: String) = "${getFormRootDir(provId)}/${Form.DIRS}/$code"
-    fun getPdfPath(provId: String, code: String) = "${getFormDir(provId, code)}/$code$EXT_PDF"
-    fun getXmlPath(provId: String, code: String) = "${getFormDir(provId, code)}/$code$EXT_XML"
-    fun getRenderImage(provId: String, code: String, index: Int) =
-        "${getFormDir(provId, code)}/${code}_$index$EXT_JPG"
+    fun getFormRootDir() = "$externalDownLoadsPath"
+    fun getFormDir() = "${getFormRootDir()}/${Form.DIRS}"
+    fun getFormDir(code: String) = "${getFormRootDir()}/${Form.DIRS}/$code"
+    fun getPdfPath(code: String) = "${getFormDir(code)}/$code$EXT_PDF"
+    fun getXmlPath(code: String) = "${getFormDir(code)}/$code$EXT_XML"
+    fun getRenderImage(code: String, index: Int) =
+        "${getFormDir(code)}/${code}_$index$EXT_JPG"
 
-    fun getRenderImages(provId: String, code: String): List<String> {
-        val formDir = File(getFormDir(provId, code))
+    fun getRenderImages(code: String): List<String> {
+        val formDir = File(getFormDir(code))
 
         val images = formDir.listFiles(object : FilenameFilter {
             override fun accept(dir: File?, name: String?): Boolean {
@@ -138,16 +163,43 @@ class PathManager(
         return imagePaths
     }
 
-    fun getDownloadTempZipPath(entryId: String) = "$externalCachePath/${Temp.DIRS}/$entryId$EXT_ZIP"
+    fun getTempDir() = "$externalCachePath/${Temp.DIRS}"
+
+    fun getTempDir(entryId: String) = "${getTempDir()}/$entryId"
+
+    fun getTempWebDataPath(entryId: String) =
+        "${getTempDir(entryId)}/${Constants.TEMP_DATA_WEB_JSON_FILE_NAME}"
+
+    fun getTempPenDir(entryId: String) = "${getTempDir(entryId)}/${Pen.DIRS}"
+
+    fun getTempDocsDir(entryId: String) = "${getTempDir(entryId)}/attach"
+
+    fun getTempZipPath(entryId: String) = "$externalCachePath/${Temp.DIRS}/$entryId$EXT_ZIP"
+
+    fun getIdCardTempDir() = "${externalCachePath}/${TempIdCard.DIRS}"
+
+    fun getIdCardTempDir(docCode: String) = "${getIdCardTempDir()}/$docCode"
+
+    fun getIdCardJpgImage(docCode: String, index: Int) =
+        "${getIdCardTempDir(docCode)}/${docCode}_${
+            String.format(
+                "%02d",
+                index + 1
+            )
+        }$EXT_JPG"
 
     /**
      * Get evidence doc image dir path
      *
-     * @param code
      */
     fun getEvidenceDocDir(entryId: String) = "${externalCachePath}/$entryId/${Docs.DIRS}"
 
-    fun getWebTempDataFilePath(entryId: String, fileName: String) = "${getEvidenceDocDir(entryId)}/$fileName"
+    fun getEvidenceDocDir(entryId: String, docCode: String) =
+        "${getEvidenceDocDir(entryId)}/$docCode"
+
+    fun getWebTempDataFilePath(entryId: String, fileName: String) =
+        "${getEvidenceDocDir(entryId)}/$fileName"
+
     /**
      * Get evidence doc image count
      *
@@ -155,7 +207,7 @@ class PathManager(
      * @return
      */
     fun getEvidenceDocImageCount(entryId: String, docCode: String): Int {
-        val dir = File(getEvidenceDocDir(entryId))
+        val dir = File(getEvidenceDocDir(entryId, docCode))
 
         return dir.list { _, name ->
             name.startsWith(docCode) && name.endsWith(EXT_JPG)
@@ -166,32 +218,84 @@ class PathManager(
      * 증빙서류 None 마스킹 Cache
      */
     fun getEvidenceDocCacheNoneMaskJpgImage(entryId: String, docCode: String, index: Int) =
-        "${getEvidenceDocDir(entryId)}/Cache/${docCode}_${String.format("%02d", index+1)}$EXT_JPG"
+        "${getEvidenceDocDir(entryId, docCode)}/Cache/${docCode}_${
+            String.format(
+                "%02d",
+                index + 1
+            )
+        }$EXT_JPG"
 
     /**
      * 증빙서류 마스킹 Cache
      */
     fun getEvidenceDocCacheMaskJpgImage(entryId: String, docCode: String, index: Int) =
-        "${getEvidenceDocDir(entryId)}/Cache/${docCode}_${String.format("%02d_Masked", index+1)}$EXT_JPG"
+        "${getEvidenceDocDir(entryId, docCode)}/Cache/${docCode}_${
+            String.format(
+                "%02d_Masked",
+                index + 1
+            )
+        }$EXT_JPG"
 
     /**
      * 전송된 이미지를 쌓아놓음.
      */
     fun getEvidenceJpgImage(entryId: String, docCode: String, index: Int) =
-        "${getEvidenceDocDir(entryId)}/${docCode}_${String.format("%02d", index+1)}$EXT_JPG"
+        "${getEvidenceDocDir(entryId, docCode)}/${docCode}_${
+            String.format(
+                "%02d",
+                index + 1
+            )
+        }$EXT_JPG"
+
+    /**
+     * 녹취
+     */
+    fun getRecordDir() = "$externalCachePath/${Record.DIRS}"
+    fun getRecordDir(entryId: String) = "${getRecordDir()}/$entryId"
+    fun getRecordDir(entryId: String, code: String) = "${getRecordDir(entryId)}/$code"
+    fun getRecordPath(entryId: String, code: String, index: Int) =
+        "${getRecordDir(entryId, code)}/${code}_${String.format("%02d", index + 1)}$EXT_MP3"
+    fun getRecordFiles(entryId: String, code: String): Array<out File> {
+        return File(getRecordDir(entryId, code)).listFiles { _, name ->
+            name.startsWith(code) && name.endsWith(EXT_MP3)
+        } ?: emptyArray()
+    }
+    fun getRecordCount(entryId: String, code: String): Int {
+        val dir = File(getRecordDir(entryId, code))
+
+        return dir.list { _, name ->
+            name.startsWith(code) && name.endsWith(EXT_MP3)
+        }?.size ?: 0
+    }
+
 
     /**
      * 결과
      */
-    fun getResultRoot(entryId: String) = "$externalDocumentsPath/$entryId/${Result.DIRS}"
+    fun getTempRoot(entryId: String) = "$externalCachePath/$entryId/${Temp.DIRS}"
 
-    fun getResultXml(entryId: String) = "$externalDocumentsPath/$entryId/${Result.DIRS}/resultXml"
+    fun getResultRoot(entryId: String) = "$externalCachePath/$entryId/${Result.DIRS}"
+
+    fun getResultXmlDir(entryId: String, order: Int) = "${getResultRoot(entryId)}/$order"
+
+    fun getResultImageDir(entryId: String) = "${getResultRoot(entryId)}/IMG"
+
+    fun getResultImageDir(entryId: String, code: String) = "${getResultImageDir(entryId)}/$code"
+
+    fun getResultDummyImageDir(entryId: String, type: String, code: String, order: Int) = "${getResultImageDir(entryId)}/${type}_${code}_$order"
 
     fun getResultConfig(entryId: String) =
-        "${getResultXml(entryId)}/Data$EXT_CFG"
+        "${getResultRoot(entryId)}/Data$EXT_CFG"
+
+    fun getIBKSConfig(entryId: String) =
+        "${getResultRoot(entryId)}/Ibks$EXT_CFG"
+
+    fun getExDataPath(entryId: String, name: String) = "${getResultRoot(entryId)}/${name}$EXT_CFG"
 
     fun getResultZip(entryId: String) =
-        "${getResultRoot(entryId)}/$entryId$EXT_ZIP"
+        "$externalCachePath/$entryId/$entryId$EXT_ZIP"
 
     fun getEtcCacheDir() = "${externalCachePath}/${Etc.DIRS}"
+
+    fun getSendImageFilePath(entryId: String, code: String, index: String) = "${getResultImageDir(entryId, code)}/${code}_${index}$EXT_PNG"
 }

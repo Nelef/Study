@@ -19,5 +19,24 @@ object ValidChecker {
     fun check( regex: String, value: String): Boolean {
         return Pattern.matches(regex, value)
     }
+}
 
+object VersionChecker {
+    fun compareVersion(current: String, new: String): Int {
+        if (!ValidChecker.isValidVersion(current) || !ValidChecker.isValidVersion(new))
+            throw IllegalArgumentException("invalid version (current : $current, new : $new)")
+
+        if (current == new) return 0
+
+        val currentVersions = current.split('.').map { it.toInt() }
+        val newVersions = new.split('.').map { it.toInt() }
+
+        if (currentVersions[0] < newVersions[0]) return 1
+
+        if (currentVersions[1] < newVersions[1]) return 1
+
+        if (currentVersions[2] < newVersions[2]) return 1
+
+        return -1
+    }
 }

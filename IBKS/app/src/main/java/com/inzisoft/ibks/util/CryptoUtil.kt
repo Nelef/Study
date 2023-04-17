@@ -55,7 +55,7 @@ object CryptoUtil {
     private fun setConfig() {
         // 암호화 관련 설정
         MIDReaderProfile.getInstance().ENCRYPT_MODE_TYPE = MIDReaderProfile.ENC_MODE_AES256 // Default
-        MIDReaderProfile.getInstance().ENC_FILE_NAME = "inzi_enc_qa.dat"
+        MIDReaderProfile.getInstance().ENC_FILE_NAME = "inzi_enc_ibks_qservice.dat"
         val param = CryptoParameter() // AES 암호화 옵션 설정
         param.setBlockSize(CryptoParameter.BLOCK_SIZE_256_BIT); // default
         param.setBlockPaddingMode(CryptoParameter.BLOCK_PADDING_MODE_BLANKS); // default

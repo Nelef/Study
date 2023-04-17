@@ -84,7 +84,7 @@ open class DocCameraDialogFragment: BaseNormalCameraDialogFragment() {
             }
         }
 
-        findNavController().navigate(
+       navigate(
             DocCameraDialogFragmentDirections.actionDocCameraDialogFragmentToPreviewDocDialogFragment(
                 scriptFunName = docCameraViewModel.scriptFunName!!,
                 previewDocType = PreviewDocType.TAKE_DOC,

@@ -13,10 +13,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.ripple.rememberRipple
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
@@ -40,7 +37,10 @@ import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Popup
+import androidx.compose.ui.window.PopupProperties
 import com.inzisoft.ibks.R
+import com.inzisoft.ibks.data.internal.Thumbnail
 import com.inzisoft.ibks.view.compose.theme.*
 
 @Preview(device = Devices.AUTOMOTIVE_1024p, showBackground = true, backgroundColor = 0xFFFFFF)
@@ -110,6 +110,28 @@ fun PreviewButtons() {
                             buttonStyle = ButtonStyle.Small
                         )
                     }
+                    Column {
+                        TopBarButton(
+                            onClick = { },
+                            icon = R.drawable.micon_set,
+                            pressedIcon = R.drawable.micon_set_on,
+                            text = "Text90"
+                        )
+                        TopBarButton(
+                            onClick = { },
+                            icon = R.drawable.micon_set,
+                            pressedIcon = R.drawable.micon_set_on,
+                            text = "Text91",
+                            backgroundColor = MaterialTheme.colors.point4Color
+                        )
+                        TopBarButton(
+                            onClick = { },
+                            enabled = false,
+                            icon = R.drawable.micon_set,
+                            pressedIcon = R.drawable.micon_set_on,
+                            text = "Text92",
+                        )
+                    }
                 }
 
                 Row {
@@ -134,22 +156,6 @@ fun PreviewButtons() {
                         ChoiceButton(selected = false, onClick = { }, text = "Choice")
                         ChoiceButton(selected = true, onClick = { }, text = "Choice")
                     }
-
-                    Column {
-                        TopBarButton(
-                            onClick = { },
-                            icon = R.drawable.micon_set,
-                            pressedIcon = R.drawable.micon_set_on,
-                            text = "Text"
-                        )
-                        TopBarButton(
-                            onClick = { },
-                            enabled = false,
-                            icon = R.drawable.micon_set,
-                            pressedIcon = R.drawable.micon_set_on,
-                            text = "Text"
-                        )
-                    }
                 }
 
                 Row {
@@ -158,28 +164,29 @@ fun PreviewButtons() {
                             onClick = { },
                             enabled = true,
                             text = "DialogBtn1",
-                            buttons = 1
+                            buttonStyle = ButtonStyle.Big
                         )
 
                         GrayDialogButton(
                             onClick = { },
                             enabled = false,
                             text = "DialogBtn2",
-                            buttons = 2
+                            buttonStyle = ButtonStyle.Basic
                         )
 
                         ColorDialogButton(
                             onClick = { },
                             enabled = true,
                             text = "DialogBtn3",
-                            buttons = 1
+                            buttonStyle = ButtonStyle.Big
                         )
 
                         ColorDialogButton(
                             onClick = { },
                             enabled = false,
                             text = "DialogBtn4",
-                            buttons = 2
+                            buttonStyle = ButtonStyle.Basic
+
                         )
                     }
                 }
@@ -220,12 +227,32 @@ fun PreviewButtons() {
                     }
                 }
 
+                Row(modifier = Modifier.background(color = MaterialTheme.colors.mainColor)) {
+                    ElectronicTabButton(
+                        selected = false,
+                        onClick = { },
+                        text = "적정성 보고서"
+                    )
+
+                    ElectronicTabButton(
+                        selected = true,
+                        onClick = { },
+                        text = "상품설명서"
+                    )
+
+                    ElectronicTabButton(
+                        selected = false,
+                        onClick = { },
+                        text = "가입신청서"
+                    )
+                }
+
                 Row {
                     MainToggleButton(
                         selected = false,
                         onClick = { },
-                        icon = R.drawable.micon_docu,
-                        selectedIcon = R.drawable.micon_docu_on,
+//                        icon = R.drawable.micon_docu,
+//                        selectedIcon = R.drawable.micon_docu_on,
                         text = "Text"
                     )
                     MainToggleButton(
@@ -720,17 +747,17 @@ fun ChoiceButton(
     )
 
     val color = if (enabled) {
-        if (selected) MaterialTheme.colors.point1Color else MaterialTheme.colors.background1Color
-    } else MaterialTheme.colors.background1Color
+        if (selected) MaterialTheme.colors.point1Color else MaterialTheme.colors.unfocusedColor
+    } else MaterialTheme.colors.unfocusedColor
 
     val borderColor =
         if (enabled) {
-            if (selected) MaterialTheme.colors.point1Color else MaterialTheme.colors.sub1Color
+            if (selected) MaterialTheme.colors.point1Color else Color(0xFFC9C9C9)
         } else MaterialTheme.colors.disableColor
 
     val textStyle = TextStyle(
         color = if (enabled) {
-            if (selected) MaterialTheme.colors.background1Color else MaterialTheme.colors.mainColor
+            if (selected) MaterialTheme.colors.background1Color else MaterialTheme.colors.sub1Color
         } else MaterialTheme.colors.disableColor,
         fontSize = 18.sp
     )
@@ -739,20 +766,15 @@ fun ChoiceButton(
 
     Box(
         modifier = Modifier
-            .defaultMinSize(97.dp, 40.dp)
+            .defaultMinSize(84.dp, 40.dp)
             .background(color = color, shape = shape)
             .border(BorderStroke(1.dp, borderColor), shape)
             .clip(shape)
-            .composed { selectableModifier }
+            .composed { selectableModifier },
+        contentAlignment = Alignment.Center
         //.clickable(enabled = enabled) { onClick }
     ) {
-        Row(
-            modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 6.dp, bottom = 7.dp),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(text = text, style = textStyle)
-        }
+        Text(text = text, style = textStyle, textAlign = TextAlign.Center)
     }
 }
 
@@ -762,7 +784,8 @@ fun TopBarButton(
     enabled: Boolean = true,
     @DrawableRes icon: Int,
     @DrawableRes pressedIcon: Int,
-    text: String
+    text: String,
+    backgroundColor: Color = Color.Transparent
 ) {
     val modifier = Modifier.defaultMinSize(minWidth = 120.dp, minHeight = 60.dp)
 
@@ -771,8 +794,10 @@ fun TopBarButton(
     val interactionSource = remember { MutableInteractionSource() }
     val pressed by interactionSource.collectIsPressedAsState()
     val colors = ButtonDefaults.buttonColors(
-        backgroundColor = if (pressed) MaterialTheme.colors.point1Color else Color.Transparent,
-        disabledBackgroundColor = Color.Transparent
+        backgroundColor = if (pressed)
+            MaterialTheme.colors.point1Color else backgroundColor,
+        disabledBackgroundColor = if (backgroundColor == MaterialTheme.colors.point4Color)
+            MaterialTheme.colors.sub1ColorDis else Color.Transparent
     )
 
     val textStyle = TextStyle(
@@ -780,9 +805,14 @@ fun TopBarButton(
             if (pressed)
                 MaterialTheme.colors.background1Color
             else
-                MaterialTheme.colors.sub1Color
-        } else
-            MaterialTheme.colors.sub1ColorDis,
+                if (backgroundColor == Color.Transparent) MaterialTheme.colors.sub1Color
+                else MaterialTheme.colors.background1Color
+        } else {
+            if (backgroundColor == MaterialTheme.colors.point4Color)
+                MaterialTheme.colors.background1Color
+            else
+                MaterialTheme.colors.sub1ColorDis
+        },
         fontWeight = FontWeight.Bold,
         fontSize = 16.sp,
         textAlign = TextAlign.Center
@@ -837,13 +867,64 @@ fun TopNavigationButton(
 
     Box(
         Modifier
-            .defaultMinSize(64.dp, 60.dp)
+            .defaultMinSize(40.dp, 40.dp)
+            .padding(start = 12.dp, top = 10.dp, bottom = 10.dp)
             .background(
                 color = color,
                 shape = shape
             )
             .clip(shape)
             .then(clickableModifier),
+        propagateMinConstraints = true
+    ) {
+        Image(
+            painter = painter,
+            modifier = Modifier
+                .defaultMinSize(24.dp, 24.dp)
+                .padding(8.dp),
+            contentDescription = "",
+            contentScale = ContentScale.Inside,
+            alpha = if (enabled) DefaultAlpha else ContentAlpha.disabled
+        )
+    }
+}
+
+@Composable
+fun IconToggleButton(
+    enabled: Boolean = true,
+    onToggle: Boolean,
+    @DrawableRes icon: Int,
+    @DrawableRes pressedIcon: Int,
+    onClick: () -> Unit
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+
+    val clickableModifier = Modifier.clickable(
+        interactionSource = interactionSource,
+        indication = null,
+        enabled = enabled,
+        role = Role.Checkbox,
+        onClick = onClick
+    )
+
+    val color = if (enabled) {
+        if (onToggle) MaterialTheme.colors.point1Color else Color.Transparent
+    } else Color.Transparent
+
+    val painter = if (onToggle) painterResource(id = pressedIcon) else painterResource(id = icon)
+
+    val shape = CircleShape
+
+    Box(
+        Modifier
+            .defaultMinSize(40.dp, 40.dp)
+            .background(
+                color = color,
+                shape = shape
+            )
+            .clip(shape)
+            .then(clickableModifier),
+        contentAlignment = Alignment.Center,
         propagateMinConstraints = true
     ) {
         Image(
@@ -916,14 +997,67 @@ fun MainNewButton(
 }
 
 @Composable
+fun ElectronicTabButton(
+    selected: Boolean,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+    enabled: Boolean = true,
+    text: String
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+
+    val selectableModifier = modifier.selectable(
+        selected = selected,
+        onClick = onClick,
+        enabled = enabled,
+        role = Role.RadioButton,
+        interactionSource = interactionSource,
+        indication = null
+    )
+
+    val color = if (selected) MaterialTheme.colors.point4Color else Color.Transparent
+
+    val shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)
+
+    val textStyle =
+        (if (selected) MaterialTheme.typography.h4 else MaterialTheme.typography.h5).copy(
+            color = if (enabled) {
+                if (selected) MaterialTheme.colors.background1Color else Divider2Color
+            } else MaterialTheme.colors.disableColor,
+            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+            textAlign = TextAlign.Center
+        )
+
+    Box(
+        Modifier
+            .defaultMinSize(minWidth = 164.dp)
+            .fillMaxHeight()
+            .then(modifier)
+            .background(
+                color = color,
+                shape = shape
+            )
+            .clip(shape)
+            .then(selectableModifier),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = text,
+            modifier = Modifier.padding(start = 24.dp, top = 6.dp, end = 24.dp, bottom = 9.dp),
+            style = textStyle
+        )
+    }
+}
+
+@Composable
 fun MainToggleButton(
     selected: Boolean,
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
     hasBorder: Boolean = false,
     enabled: Boolean = true,
-    @DrawableRes icon: Int,
-    @DrawableRes selectedIcon: Int,
+    @DrawableRes icon: Int? = null,
+    @DrawableRes selectedIcon: Int? = null,
     text: String
 ) {
     val interactionSource = remember { MutableInteractionSource() }
@@ -939,9 +1073,7 @@ fun MainToggleButton(
 
     val color = if (selected) MaterialTheme.colors.point1Color else Color.Transparent
 
-    val shape = RoundedCornerShape(20.dp)
-
-    val borderWidth = if (hasBorder) 1.dp else (-1).dp
+    val shape = RoundedCornerShape(4.dp)
 
     val imageId = if (selected) selectedIcon else icon
 
@@ -960,7 +1092,6 @@ fun MainToggleButton(
                 color = color,
                 shape = shape
             )
-            .border(borderWidth, MaterialTheme.colors.sub2Color, shape)
             .clip(shape)
             .then(selectableModifier),
         propagateMinConstraints = true
@@ -972,14 +1103,23 @@ fun MainToggleButton(
             verticalAlignment = Alignment.CenterVertically
         ) {
 
-            Image(
-                painter = painterResource(id = imageId),
-                contentDescription = "",
-                contentScale = ContentScale.Inside,
-                alpha = if (enabled) DefaultAlpha else ContentAlpha.disabled
-            )
+            imageId?.let {
+                Image(
+                    modifier = Modifier.padding(end = 8.dp),
+                    painter = painterResource(id = it),
+                    contentDescription = "",
+                    contentScale = ContentScale.Inside,
+                    alpha = if (enabled) DefaultAlpha else ContentAlpha.disabled
+                )
+            }
+//            Image(
+//                painter = painterResource(id = imageId),
+//                contentDescription = "",
+//                contentScale = ContentScale.Inside,
+//                alpha = if (enabled) DefaultAlpha else ContentAlpha.disabled
+//            )
 
-            Text(modifier = Modifier.padding(start = 8.dp), text = text, style = textStyle)
+            Text(text = text, style = textStyle)
         }
     }
 }
@@ -1302,18 +1442,13 @@ fun GrayDialogButton(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     text: String,
-    buttons: Number = 2,
+    buttonStyle: ButtonStyle = ButtonStyle.Basic,
 ) {
-    val minModifier = when (buttons) {
-        1 -> Modifier
-            .defaultMinSize(minWidth = 360.dp, minHeight = 60.dp)
-            .fillMaxHeight()
-        2 -> Modifier
-            .defaultMinSize(minWidth = 180.dp, minHeight = 60.dp)
-            .fillMaxHeight()
-        else -> Modifier
-            .defaultMinSize(minWidth = 120.dp, minHeight = 60.dp)
-            .fillMaxHeight()
+    val minModifier = when (buttonStyle) {
+        ButtonStyle.Big -> Modifier.defaultMinSize(minWidth = 300.dp, minHeight = 84.dp)
+        ButtonStyle.Basic -> Modifier.defaultMinSize(minWidth = 180.dp, minHeight = 60.dp)
+        ButtonStyle.Small -> Modifier.defaultMinSize(minWidth = 180.dp, minHeight = 60.dp)
+        ButtonStyle.Dialog -> Modifier.defaultMinSize(minWidth = 300.dp, minHeight = 60.dp)
     }
 
     val textStyle = TextStyle(
@@ -1350,18 +1485,13 @@ fun ColorDialogButton(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     text: String,
-    buttons: Number = 2,
+    buttonStyle: ButtonStyle = ButtonStyle.Basic,
 ) {
-    val minModifier = when (buttons) {
-        1 -> Modifier
-            .defaultMinSize(minWidth = 360.dp, minHeight = 60.dp)
-            .fillMaxHeight()
-        2 -> Modifier
-            .defaultMinSize(minWidth = 180.dp, minHeight = 60.dp)
-            .fillMaxHeight()
-        else -> Modifier
-            .defaultMinSize(minWidth = 120.dp, minHeight = 60.dp)
-            .fillMaxHeight()
+    val minModifier = when (buttonStyle) {
+        ButtonStyle.Big -> Modifier.defaultMinSize(minWidth = 300.dp, minHeight = 84.dp)
+        ButtonStyle.Basic -> Modifier.defaultMinSize(minWidth = 180.dp, minHeight = 60.dp)
+        ButtonStyle.Small -> Modifier.defaultMinSize(minWidth = 180.dp, minHeight = 60.dp)
+        ButtonStyle.Dialog -> Modifier.defaultMinSize(minWidth = 300.dp, minHeight = 60.dp)
     }
 
     val textStyle = TextStyle(

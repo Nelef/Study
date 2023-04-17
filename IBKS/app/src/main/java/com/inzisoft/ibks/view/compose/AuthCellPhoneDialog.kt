@@ -1,6 +1,5 @@
 package com.inzisoft.ibks.view.compose
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -11,8 +10,6 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
@@ -23,6 +20,7 @@ import com.inzisoft.ibks.R
 import com.inzisoft.ibks.view.compose.theme.IBKSTheme
 import com.inzisoft.ibks.view.compose.theme.disableColor
 import com.inzisoft.ibks.view.compose.theme.point1Color
+import com.inzisoft.ibks.view.compose.theme.point4Color
 
 @Preview(widthDp = 1280, heightDp = 760)
 @Composable
@@ -30,31 +28,31 @@ fun PreviewAuthCellPhoneDialog() {
     IBKSTheme {
         AuthCellPhoneDialog(
             visible = true,
-            name = "홍길동",
             cellPhone = "010-1234-5678",
             onClose = { },
             onRequestCellphoneAuth = {},
             authNumber = "",
             onAuthNumberChange = {},
             validTime = "06:30",
-            onCancel = { }) {
-
-        }
+            onConfirm = {},
+            onRequestCellphoneAuthResend = {},
+            onTimeExtension = {}
+        )
     }
 }
 
 @Composable
 fun AuthCellPhoneDialog(
     visible: Boolean,
-    name: String,
     cellPhone: String,
     onClose: () -> Unit,
     onRequestCellphoneAuth: () -> Unit,
+    onRequestCellphoneAuthResend: () -> Unit,
     authNumber: String,
     onAuthNumberChange: (String) -> Unit,
     invalidAuthNumMsg: String? = null,
     validTime: String?,
-    onCancel: () -> Unit,
+    onTimeExtension: () -> Unit,
     onConfirm: () -> Unit
 ) {
     val focusManager = LocalFocusManager.current
@@ -100,7 +98,7 @@ fun AuthCellPhoneDialog(
                         .border(
                             width = 1.dp,
                             color = MaterialTheme.colors.disableColor,
-                            shape = RoundedCornerShape(16.dp)
+                            shape = RoundedCornerShape(0.dp)
                         )
                         .padding(top = 38.dp, start = 108.dp, end = 108.dp, bottom = 24.dp)
                         .align(Alignment.CenterHorizontally),
@@ -110,7 +108,7 @@ fun AuthCellPhoneDialog(
                     Input(
                         value = authNumber,
                         onValueChange = onAuthNumberChange,
-                        enabled = validTime != null,
+                        enabled = validTime != null && validTime != "00 : 00",
                         placeholder = stringResource(R.string.request_write_auth_number_hint),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         keyboardActions = KeyboardActions {
@@ -137,8 +135,8 @@ fun AuthCellPhoneDialog(
                     ) {
                         RoundButton(
                             modifier = Modifier.size(76.dp, 28.dp),
-                            onClick = { },
-                            enabled = true,
+                            onClick = onTimeExtension,
+                            enabled = validTime == "00 : 00",
                             text = stringResource(R.string.valid_time_extension),
                             buttonStyle = ButtonStyle.Small
                         )
@@ -147,8 +145,8 @@ fun AuthCellPhoneDialog(
 
                         RoundButton(
                             modifier = Modifier.size(76.dp, 28.dp),
-                            onClick = { },
-                            enabled = true,
+                            onClick = onRequestCellphoneAuthResend,
+                            enabled = validTime != null,
                             text = stringResource(R.string.re_send_auth_number),
                             buttonStyle = ButtonStyle.Small
                         )
@@ -156,9 +154,14 @@ fun AuthCellPhoneDialog(
                 }
                 Spacer(modifier = Modifier.height(56.dp))
 
-                Text(text = stringResource(R.string.changed_mobile_number_hint))
+                Text(
+                    text = stringResource(R.string.changed_mobile_number_hint),
+                    textAlign = TextAlign.Center,
+                    color = MaterialTheme.colors.point4Color,
+                    style = MaterialTheme.typography.body1
+                )
 
-                Spacer(modifier = Modifier.height(48.dp))
+                Spacer(modifier = Modifier.weight(1f))
             }
 
             Row(
@@ -169,8 +172,9 @@ fun AuthCellPhoneDialog(
                 ColorDialogButton(
                     onClick = onConfirm,
                     modifier = Modifier.weight(1f),
-                    enabled = authNumber.isNotEmpty(),
+                    enabled = authNumber.isNotEmpty() && validTime != "00 : 00",
                     text = stringResource(id = R.string.auth_number_confirm),
+                    buttonStyle = ButtonStyle.Big
                 )
             }
         }

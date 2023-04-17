@@ -42,6 +42,7 @@ fun SecureInput(
     isNumKeyboard: Boolean = false,
     minLength: Int = 0,
     maxLength: Int = 14,
+    onHashValueChange: (String) -> Unit = {},
     onSecureValueChange: (ByteArray) -> Unit
 ) {
     val context = LocalContext.current
@@ -54,6 +55,10 @@ fun SecureInput(
                 result.data?.getByteArrayExtra(SecureKeypadActivity.RESULT_ENC)?.let {
                     onSecureValueChange(it)
                 } ?: onSecureValueChange(byteArrayOf())
+                result.data?.getStringExtra(SecureKeypadActivity.RESULT_DEC_PART) ?: ""
+                result.data?.getStringExtra(SecureKeypadActivity.RESULT_ENC_HASH)?.let {
+                    onHashValueChange(it)
+                } ?: onHashValueChange(String())
             } else {
                 value = ""
                 onSecureValueChange(byteArrayOf())
@@ -73,7 +78,7 @@ fun SecureInput(
         )
     }
 
-    if(showErrorMessage) {
+    if (showErrorMessage) {
         Input(
             value = value,
             onValueChange = {},
@@ -151,7 +156,7 @@ object SecureKeyPadScope {
                     onKeypadChangeHeight(h)
                 },
                 onTextChanged = onTextChanged,
-                onConfirm = {
+                onConfirm = { _, _ ->
                     focusManager.clearFocus()
                     onConfirm()
                 })

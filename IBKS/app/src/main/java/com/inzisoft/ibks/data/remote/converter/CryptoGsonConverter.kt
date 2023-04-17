@@ -3,7 +3,8 @@ package com.inzisoft.ibks.data.remote.converter
 import com.google.gson.Gson
 import com.google.gson.TypeAdapter
 import com.google.gson.reflect.TypeToken
-//import com.inzisoft.ibks.util.log.QLog
+import com.inzisoft.ibks.BuildConfig
+import com.inzisoft.ibks.util.log.QLog
 import okhttp3.MediaType
 import okhttp3.RequestBody
 import okhttp3.ResponseBody
@@ -59,10 +60,11 @@ private class RequestConverter<T>(
 
         val encrypted = cryptoService.encrypt(buffer.readByteArray())
 
-        // TODO: 테스트 코드 제거 필요
-//        QLog.t("jhkim").d("origin : $value\n\nencrypted : ${String(encrypted)}")
-        val decrypted = cryptoService.decrypt(encrypted)
-//        QLog.t("jhkim").d("decrypted : ${String(decrypted)}")
+        if (BuildConfig.DEBUG) {
+            QLog.d("origin : $value\n\nencrypted : ${String(encrypted)}")
+            val decrypted = cryptoService.decrypt(encrypted)
+            QLog.d("decrypted : ${String(decrypted)}")
+        }
 
         return RequestBody.create(MEDIA_TYPE, encrypted)
     }
@@ -76,8 +78,6 @@ class ResponseConverter<T>(
 
     override fun convert(value: ResponseBody): T {
         return value.use {
-            // TODO: 제거 필요 향후 복호화 처리 해야함
-//            val json = String(value.bytes(), StandardCharsets.UTF_8)
             val json = String(cryptoService.decrypt(value.bytes()), StandardCharsets.UTF_8)
             adapter.fromJson(json)
         }

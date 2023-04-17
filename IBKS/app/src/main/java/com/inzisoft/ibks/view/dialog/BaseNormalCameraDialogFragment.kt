@@ -3,12 +3,14 @@ package com.inzisoft.ibks.view.dialog
 import android.os.Handler
 import android.os.Looper
 import android.view.View
+import com.inzisoft.ibks.data.internal.AuthDialogData
+import com.inzisoft.ibks.view.compose.AlertDialog
 import com.inzisoft.ibks.view.compose.NormalCameraTopBar
 import com.inzisoft.ibks.view.compose.theme.IBKSTheme
 import com.inzisoft.ibks.viewmodel.BaseNormalCameraViewModel
 import com.inzisoft.ibks.viewmodel.CameraState
 
-abstract class BaseNormalCameraDialogFragment: CameraDialogFragment() {
+abstract class BaseNormalCameraDialogFragment : CameraDialogFragment() {
     override fun initComposeLayout() {
         binding.leftComposeView.visibility = View.GONE
         binding.rightComposeView.visibility = View.GONE
@@ -20,16 +22,20 @@ abstract class BaseNormalCameraDialogFragment: CameraDialogFragment() {
                 IBKSTheme {
                     val viewModel = getViewModel() as BaseNormalCameraViewModel
 
-                    when(getViewModel().cameraState) {
+                    when (getViewModel().cameraState) {
                         CameraState.CameraMaxTake -> {
                             binding.btnTakeCamera.isEnabled = false
+                            binding.btnGallery.isEnabled = false
                             showPreviewDocDialogFragment()
                         }
-                        else -> binding.btnTakeCamera.isEnabled = true
+                        else -> {
+                            binding.btnTakeCamera.isEnabled = true
+                            binding.btnGallery.isEnabled = true
+                        }
                     }
 
                     binding.ivThumbnail.setImageBitmap(viewModel.imageData)
-                    if(viewModel.imageData != null) {
+                    if (viewModel.imageData != null) {
                         binding.ivThumbnail.setOnClickListener {
                             showPreviewDocDialogFragment()
                         }
@@ -37,7 +43,7 @@ abstract class BaseNormalCameraDialogFragment: CameraDialogFragment() {
                         binding.ivThumbnail.setOnClickListener(null)
                     }
 
-                    binding.tvThumbcount.text = if(viewModel.imageIndex == 0) {
+                    binding.tvThumbcount.text = if (viewModel.imageIndex == 0) {
                         binding.tvThumbcount.visibility = View.GONE
                         "0"
                     } else {
@@ -45,8 +51,11 @@ abstract class BaseNormalCameraDialogFragment: CameraDialogFragment() {
                         "${viewModel.imageIndex}"
                     }
 
-                    NormalCameraTopBar(title = viewModel.docInfoData.docName) {
-                        cancel()
+                    NormalCameraTopBar(
+                        title = viewModel.docInfoData.docName,
+                        canComplete = viewModel.imageIndex != 0,
+                        onCancel = { cancel() }) {
+                        showPreviewDocDialogFragment()
                     }
                 }
             }

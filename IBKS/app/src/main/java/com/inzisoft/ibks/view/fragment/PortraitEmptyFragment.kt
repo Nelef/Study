@@ -79,7 +79,7 @@ class PortraitEmptyFragment: BaseFragment() {
             }
         }
 
-        findNavController().navigate(
+        navigate(
             PortraitEmptyFragmentDirections.actionPortraitEmptyFragmentToDocCameraDialogFragment(
                 scriptFunName = scriptFunName,
                 docCameraData = docCameraData
@@ -96,7 +96,7 @@ class PortraitEmptyFragment: BaseFragment() {
             }
         }
 
-        findNavController().navigate(
+       navigate(
             PortraitEmptyFragmentDirections.actionPortraitEmptyFragmentToPreviewDocDialogFragment(
                 scriptFunName = scriptFunName,
                 previewDocType = PreviewDocType.PREVIEW_DOC,

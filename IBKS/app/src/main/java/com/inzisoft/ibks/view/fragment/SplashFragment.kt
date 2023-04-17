@@ -15,7 +15,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -30,8 +29,6 @@ import com.inzisoft.ibks.base.BaseFragment
 import com.inzisoft.ibks.base.Right
 import com.inzisoft.ibks.data.remote.model.ApplicationVersionResponse
 import com.inzisoft.ibks.util.log.QLog
-import com.inzisoft.ibks.view.compose.ButtonStyle
-import com.inzisoft.ibks.view.compose.ColorButton
 import com.inzisoft.ibks.view.compose.theme.background1Color
 import com.inzisoft.ibks.view.compose.theme.mainColor
 import com.inzisoft.ibks.view.compose.theme.sub1Color
@@ -109,20 +106,18 @@ class SplashFragment : BaseFragment() {
     private fun NavigateLoginPage() {
         showProgressState = false
         // TODO 앱 업데이트 api 생성 후 작업
-//        findNavController().navigate(R.id.action_splashFragment_to_loginFragment)
-        findNavController().navigate(R.id.action_splashFragment_to_applicationUpdateFragment)
+       navigate(SplashFragmentDirections.actionSplashFragmentToLoginFragment())
     }
 
     @Composable
     private fun NavigateApplicationUpdatePage(applicationVersion: ApplicationVersionResponse) {
         showProgressState = false
-        findNavController().navigate(
+       navigate(
             SplashFragmentDirections.actionSplashFragmentToApplicationUpdateFragment(
-                // TODO 앱 업데이트 api 생성
-//                applicationVersion.version,
-//                applicationVersion.name,
-//                applicationVersion.fileRefNo,
-//                true
+                applicationVersion.version,
+                applicationVersion.name,
+                applicationVersion.fileRefNo,
+                true
             )
         )
     }
@@ -132,10 +127,15 @@ class SplashFragment : BaseFragment() {
         showBasicDialog(
             titleText = getString(R.string.alert),
             contentText = getString(R.string.alert_network_is_not_connected_message),
-            rightBtnText = getString(R.string.confirm),
+            rightBtnText = getString(R.string.retry),
             onDismissRequest = {
-                terminateApplication()
-            })
+                if (availableNetwork()) {
+                    viewModel.checkApplicationVersion() // 앱버전 체크
+                } else {
+                    viewModel.checkRootingStatus(requireContext())
+                }
+            }
+        )
     }
 
     @Composable

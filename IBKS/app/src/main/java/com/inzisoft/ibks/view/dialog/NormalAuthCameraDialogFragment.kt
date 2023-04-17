@@ -44,7 +44,7 @@ class NormalAuthCameraDialogFragment: BaseNormalCameraDialogFragment() {
             }
         }
 
-        findNavController().navigate(
+       navigate(
             NormalAuthCameraDialogFragmentDirections.actionNormalAuthCameraDialogFragmentToPreviewDocDialogFragment(
                 normalAuthCameraViewModel.scriptFunName!!,
                 PreviewDocType.NORMAL_AUTH,

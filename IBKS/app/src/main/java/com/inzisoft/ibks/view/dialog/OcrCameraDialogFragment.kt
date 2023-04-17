@@ -12,37 +12,39 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.constraintlayout.widget.ConstraintSet
 import androidx.fragment.app.viewModels
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.fragment.findNavController
-import com.inzisoft.ibks.FragmentRequest
-import com.inzisoft.ibks.FragmentResult
-import com.inzisoft.ibks.TakeType
-import com.inzisoft.ibks.data.internal.AuthDialogData
-import com.inzisoft.ibks.setFragmentResult
-import com.inzisoft.ibks.view.compose.theme.IBKSTheme
-import com.inzisoft.ibks.view.compose.theme.OcrImageBackgroundColor
-import com.inzisoft.ibks.viewmodel.CameraState
-import com.inzisoft.ibks.viewmodel.OcrCameraViewModel
-import com.inzisoft.mobile.data.MIDReaderProfile
-import com.inzisoft.ibks.viewmodel.CameraViewModel
+import com.inzisoft.ibks.*
 import com.inzisoft.ibks.R
 import com.inzisoft.ibks.base.BaseDialogFragmentViewModel
+import com.inzisoft.ibks.base.PopupState
+import com.inzisoft.ibks.base.Right
+import com.inzisoft.ibks.data.internal.AuthDialogData
 import com.inzisoft.ibks.data.web.AuthCameraData
 import com.inzisoft.ibks.view.compose.*
-import com.inzisoft.ibks.view.compose.theme.*
+import com.inzisoft.ibks.view.compose.theme.IBKSTheme
+import com.inzisoft.ibks.view.compose.theme.OcrImageBackgroundColor
+import com.inzisoft.ibks.view.compose.theme.point4Color
+import com.inzisoft.ibks.view.compose.theme.textColor
 import com.inzisoft.ibks.viewmodel.AuthData
+import com.inzisoft.ibks.viewmodel.CameraState
+import com.inzisoft.ibks.viewmodel.CameraViewModel
+import com.inzisoft.ibks.viewmodel.OcrCameraViewModel
+import com.inzisoft.mobile.data.MIDReaderProfile
 import dagger.hilt.android.AndroidEntryPoint
+import java.util.*
 
 @AndroidEntryPoint
-class OcrCameraDialogFragment: CameraDialogFragment() {
+open class OcrCameraDialogFragment: CameraDialogFragment() {
     private val CAMERA_GUIDE = "CAMERA_GUIDE"
     private val RECOG_RESULT = "RECOG_RESULT"
 
@@ -60,6 +62,19 @@ class OcrCameraDialogFragment: CameraDialogFragment() {
             rightComposeView = binding.rightComposeView,
             popupComposeView = binding.popupComposeView
         )
+
+        binding.lyCameraOptions.visibility = View.VISIBLE
+        binding.lyThumbnail.visibility = View.GONE
+        binding.btnGallery.visibility = View.GONE
+        val constraints = ConstraintSet()
+        constraints.clone(binding.lyCameraOptions)
+        constraints.connect(
+            binding.btnTakeCamera.id,
+            ConstraintSet.RIGHT,
+            binding.guidelineCameraBtn.id,
+            ConstraintSet.LEFT
+        )
+        constraints.applyTo(binding.lyCameraOptions)
     }
 
     override fun getViewModel(): CameraViewModel {
@@ -69,7 +84,7 @@ class OcrCameraDialogFragment: CameraDialogFragment() {
     /**
      * 신분증 인식 촬영
      */
-    private fun OcrCameraScreen(
+    fun OcrCameraScreen(
         topComposeView: ComposeView,
         leftComposeView: ComposeView,
         rightComposeView: ComposeView,
@@ -89,12 +104,7 @@ class OcrCameraDialogFragment: CameraDialogFragment() {
                             findNavController().navigateUp()
                         },
                         onAuth = {
-                            ocrCameraViewModel.auth(TakeType.OCR) { result ->
-                                if (result) {
-                                    setFragmentResult(FragmentRequest.OcrCamera, FragmentResult.OK(null))
-                                    findNavController().navigateUp()
-                                }
-                            }
+                            ocrCameraViewModel.auth(TakeType.OCR)
                         }
                     )
                 }
@@ -156,71 +166,64 @@ class OcrCameraDialogFragment: CameraDialogFragment() {
                     when (cameraState) {
                         is CameraState.CameraPreviewState -> navController.navigate(CAMERA_GUIDE)
                         is CameraState.CameraOcrResultState -> navController.navigate(RECOG_RESULT)
+                        else -> {}
                     }
                 }
             }
         }
 
         popupComposeView.apply {
+            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
             setContent {
                 IBKSTheme {
-                    when(val dialogState = ocrCameraViewModel.dialogState) {
-                        is AuthDialogData.ShowAuthGuidePopup ->
-                            CameraAuthGuidePopup {
-                                ocrCameraViewModel.closeAuthGuideDialog()
-                            }
-                        is AuthDialogData.AuthFailedPopup -> {
-                            AlertDialog(
-                                contentText = buildAnnotatedString {
-                                    append(dialogState.message)
-                                },
-                                onRightBtnClick = {
-                                    ocrCameraViewModel.dialogState = AuthDialogData.None
-                                })
-                        }
-                        is AuthDialogData.Loading -> { Loading() }
-                        is AuthDialogData.ShowOcrFailedPopup -> {
-                            AlertDialog(
-                                contentText = buildAnnotatedString {
-                                    append(stringResource(id = R.string.ocr_failed_popup))
-                                },
-                                leftBtnText = stringResource(id = R.string.no),
-                                rightBtnText = stringResource(id = R.string.yes),
-                                onLeftBtnClick = {
-                                    setFragmentResult(FragmentRequest.OcrCamera, FragmentResult.Cancel())
-                                    findNavController().navigateUp()
-                                },
-                                onRightBtnClick = {
-                                    ocrCameraViewModel.dialogState = AuthDialogData.None
-                                    ocrCameraViewModel.retake()
-                                })
-                        }
-                        is AuthDialogData.None -> {}
-                    }
+                    PopupComposeViewScreen()
                 }
             }
         }
     }
 
-    /**
-     * 인감촬영 UI
-     */
-    private fun sealScanCameraViewInit() {
-
-    }
-
-    /**
-     * 문서촬영 UI
-     */
-    private fun paperScanCameraViewInit() {
-
-    }
-
-    /**
-     * 여권촬영 UI
-     */
-    private fun passportOcrCameraViewInit() {
-
+    @Composable
+    fun PopupComposeViewScreen() {
+        when(val dialogState = ocrCameraViewModel.dialogState) {
+            is AuthDialogData.ShowAuthGuidePopup ->
+                CameraAuthGuidePopup {
+                    ocrCameraViewModel.closeAuthGuideDialog()
+                }
+            is AuthDialogData.AuthFailedPopup -> {
+                ShowAlertDialog(
+                    contentText = dialogState.message,
+                    onDismissRequest = {
+                        ocrCameraViewModel.dialogState = AuthDialogData.None
+                    }
+                )
+            }
+            is AuthDialogData.Loading -> { Loading() }
+            is AuthDialogData.ShowOcrFailedPopup -> {
+                ShowAlertDialog(
+                    contentText = R.string.ocr_failed_popup,
+                    leftBtnText = R.string.camera_cancel,
+                    rightBtnText = R.string.camera_retake,
+                    onDismissRequest = { state: PopupState ->
+                        when (state) {
+                            Right -> {
+                                ocrCameraViewModel.dialogState = AuthDialogData.None
+                                ocrCameraViewModel.clearPreviewRecogCount()
+                                ocrCameraViewModel.retake()
+                            }
+                            else -> {
+                                setFragmentResult(FragmentRequest.OcrCamera, FragmentResult.Cancel())
+                                findNavController().navigateUp()
+                            }
+                        }
+                    }
+                )
+            }
+            is AuthDialogData.AuthComplete -> {
+                setFragmentResult(FragmentRequest.OcrCamera, FragmentResult.OK(null))
+                findNavController().navigateUp()
+            }
+            is AuthDialogData.None -> {}
+        }
     }
 
     @Composable
@@ -330,9 +333,11 @@ class OcrCameraDialogFragment: CameraDialogFragment() {
                     authData = authData,
                     authCameraData = authCameraData,
                     onDatePickerShow = { key ->
-                        showDatePicker { date ->
-                            authData.dataMap[key] =
-                                SimpleDateFormat("yyyyMMdd").format(date)
+                        showDatePicker(maxDate = Date()) { date ->
+                            if(Date() > date) {
+                                authData.dataMap[key] =
+                                    SimpleDateFormat("yyyyMMdd").format(date)
+                            }
                         }
                     }
                 )
@@ -372,6 +377,7 @@ class OcrCameraDialogFragment: CameraDialogFragment() {
                         )
                     }
                 }
+                else -> {}
             }
         }
     }

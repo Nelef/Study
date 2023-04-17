@@ -7,6 +7,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.SavedStateHandle
 import com.inzisoft.ibks.AuthType
 import com.inzisoft.ibks.data.repository.LocalRepository
+import com.inzisoft.ibks.data.repository.CameraRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
@@ -15,8 +16,9 @@ import javax.inject.Inject
 class DirectInputViewModel @Inject constructor(
     @ApplicationContext context: Context,
     savedStateHandle: SavedStateHandle,
-    localRepository: LocalRepository
-) : AuthViewModel(context, savedStateHandle, localRepository) {
+    localRepository: LocalRepository,
+    cameraRepository: CameraRepository
+) : AuthViewModel(context, savedStateHandle, cameraRepository, localRepository) {
 
     var directInputUiState by mutableStateOf<DirectInputUiState>(DirectInputUiState.IDCARD)
 
