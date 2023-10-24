@@ -4,11 +4,11 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
+import android.view.ViewGroup
 import android.webkit.JavascriptInterface
 import android.webkit.WebChromeClient
 import android.webkit.WebSettings
 import android.webkit.WebView
-import android.webkit.WebView.setWebContentsDebuggingEnabled
 import android.webkit.WebViewClient
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -43,6 +43,8 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProvider
 import com.uyeong.featuredev.ui.theme.FeatureDevTheme
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 
 
 class MainActivity : ComponentActivity() {
@@ -170,20 +172,17 @@ class MainActivity : ComponentActivity() {
                     factory = {
                         webView.apply {
                             settings.apply {
+                                userAgentString += " saleskit_android_app";
+
+                                layoutParams = ViewGroup.LayoutParams(
+                                    ViewGroup.LayoutParams.MATCH_PARENT,
+                                    ViewGroup.LayoutParams.MATCH_PARENT
+                                )
                                 domStorageEnabled = true
                                 javaScriptEnabled = true
                                 javaScriptCanOpenWindowsAutomatically = true
-
-                                useWideViewPort = true
-                                loadWithOverviewMode = true
-                                setSupportZoom(true)
-                                builtInZoomControls = true
-                                displayZoomControls = false
-
                                 setSupportMultipleWindows(true)
                                 cacheMode = WebSettings.LOAD_NO_CACHE
-
-                                setWebContentsDebuggingEnabled(true)
                             }
                             addJavascriptInterface(
                                 WebInterface(),
@@ -221,8 +220,13 @@ class MainActivity : ComponentActivity() {
                                 )
                                 // 웹에서 네이티브 브릿지 함수를 재호출시 콜백이 늦게와서 webViewControl가 none으로 되어 상태를 못받는 현상 생겨서 수정함.
                                 viewModel.webViewControl = WebViewControl.None
+
+                                val json = Json.encodeToString(response)
+
+                                Log.d("webViewResponse2", json)
+
                                 webView.evaluateJavascript(
-                                    "responseNative(\'${response.ok}\', \'${response.data}\', \'${response.message}\')",
+                                    "responseNative(${json})",
                                     null
                                 )
                             }

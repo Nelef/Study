@@ -6,6 +6,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
+import kotlinx.serialization.Serializable
 
 val AndroidViewModel.context: Context
     get() = getApplication<Application>().applicationContext
@@ -13,11 +14,11 @@ val AndroidViewModel.context: Context
 class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val contactsExtraction = ContactsExtraction(context)
     var webViewControl by mutableStateOf<WebViewControl>(WebViewControl.None)
-    var url by mutableStateOf("http://61.109.169.166:9001/")
+    var url by mutableStateOf("http://61.109.169.171:9001/")
 
     fun exportContactsToJSONAndVcf() {
         val contactsJSON = contactsExtraction.exportContactsToVcf()
-        webViewControl = WebViewControl.JavaScript(WebViewResponse("ok", contactsJSON, null))
+        webViewControl = WebViewControl.JavaScript(WebViewResponse(true, contactsJSON, null))
     }
 }
 
@@ -30,4 +31,5 @@ sealed class WebViewControl {
     object NewCookie : WebViewControl()
 }
 
-data class WebViewResponse(val ok: String, val data: String?, val message: String?)
+@Serializable
+data class WebViewResponse(val ok: Boolean, val data: String?, val message: String?)

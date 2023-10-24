@@ -16,22 +16,23 @@ import java.io.FileOutputStream
 
 class ContactsExtraction(private val context: Context) {
     // 주소록을 VCF로 저장
-    fun exportContactsToVcf() : String {
+    fun exportContactsToVcf(): String {
         val contacts = fetchContacts()
 
         // Json 으로 변환
         Log.i("VCF_json", Json.encodeToString(contacts))
 
-        // vcf 로 변환 및 저장
-        val vCards = contacts.map { contactToVCard(it) }
-        val vcfString = Ezvcard.write(vCards).go()
-        val file = File(context.getExternalFilesDir(null), "contacts.vcf")
-        FileOutputStream(file).use {
-            it.write(vcfString.toByteArray())
-        }
+//        // vcf 로 변환 및 저장
+//        val vCards = contacts.map { contactToVCard(it) }
+//        val vcfString = Ezvcard.write(vCards).go()
+//        val file = File(context.getExternalFilesDir(null), "contacts.vcf")
+//        FileOutputStream(file).use {
+//            it.write(vcfString.toByteArray())
+//        }
+//
+//        Log.i("VCF_Save", "VCF 저장 완료: ${file.path}")
 
-        Toast.makeText(context, "VCF 저장 완료: ${file.path}", Toast.LENGTH_LONG).show()
-        Log.i("VCF_Save", "VCF 저장 완료: ${file.path}")
+        Toast.makeText(context, "주소록 추출 및 json 전송 완료", Toast.LENGTH_LONG).show()
 
         return Json.encodeToString(contacts)
     }
