@@ -216,17 +216,13 @@ class MainActivity : ComponentActivity() {
 
                                 Log.d(
                                     "webViewResponse",
-                                    "responseNative(ok: \'${response.ok}\', data: \'${response.data}\', message: \'${response.message}\')"
+                                    "responseNative(\'${response}\')"
                                 )
                                 // 웹에서 네이티브 브릿지 함수를 재호출시 콜백이 늦게와서 webViewControl가 none으로 되어 상태를 못받는 현상 생겨서 수정함.
                                 viewModel.webViewControl = WebViewControl.None
 
-                                val json = Json.encodeToString(response)
-
-                                Log.d("webViewResponse2", json)
-
                                 webView.evaluateJavascript(
-                                    "responseNative(${json})",
+                                    "responseNative(${response})",
                                     null
                                 )
                             }
@@ -241,11 +237,6 @@ class MainActivity : ComponentActivity() {
 
     inner class WebInterface {
 
-        /**
-         * 페이지 정보 전달
-         *
-         * @param json
-         */
         @JavascriptInterface
         fun contactsExtraction() {
             viewModel.exportContactsToJSONAndVcf()

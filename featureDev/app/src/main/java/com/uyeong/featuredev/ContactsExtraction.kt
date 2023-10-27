@@ -16,7 +16,7 @@ import java.io.FileOutputStream
 
 class ContactsExtraction(private val context: Context) {
     // 주소록을 VCF로 저장
-    fun exportContactsToVcf(): String {
+    fun exportContactsToVcf(): List<Contact> {
         val contacts = fetchContacts()
 
         // Json 으로 변환
@@ -34,7 +34,7 @@ class ContactsExtraction(private val context: Context) {
 
         Toast.makeText(context, "주소록 추출 및 json 전송 완료", Toast.LENGTH_LONG).show()
 
-        return Json.encodeToString(contacts)
+        return contacts
     }
 
     private fun fetchContacts(): List<Contact> {
