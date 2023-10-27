@@ -1,0 +1,111 @@
+openapi: 3.0.0
+
+info:
+  description: |
+    ## SalesKit Webview에 제공하는 Android/iOS Native 함수 목록
+    ***
+    ## web(js)에서 호출법
+    - Android: ```window.WebInterface.함수이름();```
+    - iOS: ```window.webkit.messageHandlers.함수이름.postMessage();```
+    ## web(js)에서 응답받기
+    - Android, iOS: ```responseNative(Object)```
+      ### 성공 Object 예시 (ok: Boolean, data: Object?)
+      ```
+      {
+        "ok": true,
+        "data": {
+          "testData": "테스트데이터입니다."
+        }
+      }
+      ```
+      ### 실패 Object 예시 (ok: Boolean, message: String?)
+      ```
+      {
+        "ok": false,
+        "message": "process failed"
+      }
+      ```
+      - Object? 와 String? 은 해당변수가 없을 수도 있다는 뜻.
+    ***
+    ## 참고
+    - Swagger 문법에 맞추기 위해 모든 API가 POST로 되어 있음
+    - 일반적으로 제공되는 함수의 Parameter는 String(json)
+    - Request Body 부분이 해당 함수의 Parameter는 String(json)이다.
+  version: "0.0.1"
+  title: SalesKit Webview Bridge
+#tags:
+#  - name: CAMERA
+
+paths:
+
+  /contactsExtraction:
+    post:
+      tags:
+        - Android API
+      summary: 주소록 추출 호출
+      operationId: contactsExtraction
+
+
+      responses:
+        '200':
+          description: SUCCESS
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseContactsExtraction200'
+        '400':
+          description: FAIL
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseContactsExtraction400'
+
+
+
+
+
+components:
+  schemas:
+
+    ResponseContactsExtraction200:
+      type: object
+      properties:
+        ok:
+          type: boolean
+          example: true
+          description: API 완료 여부
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+                example: 홍길동
+              phoneNumber:
+                type: string
+                example: 01012345678
+              org:
+                type: string
+                example: 인지소프트
+              title:
+                type: string
+                example: 프로
+          description: 데이터 목록
+      required:
+        - ok
+
+
+    ResponseContactsExtraction400:
+      type: object
+      properties:
+        ok:
+          type: boolean
+          example: false
+          description: API 완료 여부
+        message:
+          type: string
+          example: "process failed"
+      required:
+        - ok
+
