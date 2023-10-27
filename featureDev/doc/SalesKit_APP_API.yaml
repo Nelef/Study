@@ -4,7 +4,7 @@ info:
   description: |
     ## SalesKit Webview에 제공하는 Android/iOS Native 함수 목록
     ***
-    ## web(js)에서 현재 Android App인지 iOS App인지 판단하는 법
+    ## web(js)에서 현재 Android App인지 iOS App인지 판단하는 방법
     - ```navigator.useragent``` 변수로 확인 가능 (콘솔로 찍어볼 수 있음)
       - ```saleskit_android_app```
       - ```saleskit_ios_app```
