@@ -106,6 +106,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    // 테스트 버튼
     @Composable
     fun TestUI(onClick: () -> Unit) {
         var onTestButton by remember { mutableStateOf(false) }
@@ -146,6 +147,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    // 웹 화면
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     fun TestWeb(url: String, changeUrl: (newUrl: String) -> Unit) {
@@ -240,6 +242,11 @@ class MainActivity : ComponentActivity() {
         @JavascriptInterface
         fun contactsExtraction() {
             viewModel.exportContactsToJSONAndVcf()
+        }
+
+        @JavascriptInterface
+        fun testAPI(json: String) {
+            viewModel.testAPI(json)
         }
     }
 
