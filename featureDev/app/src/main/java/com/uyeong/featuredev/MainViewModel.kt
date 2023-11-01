@@ -22,7 +22,7 @@ val AndroidViewModel.context: Context
 class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val contactsExtraction = ContactsExtraction(context)
     var webViewControl by mutableStateOf<WebViewControl>(WebViewControl.None)
-    var url by mutableStateOf("http://61.109.169.166:9001/")
+    var url by mutableStateOf("http://61.109.169.171:9001/")
 
     fun exportContactsToJSONAndVcf() {
         val contactsJSON = contactsExtraction.exportContactsToVcf()
@@ -30,7 +30,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         sendWebViewResponse(ok = true, data = contactsJSON)
     }
 
-    fun testAPI(json: String) {
+    fun testAPI(uuid: String, json: String) {
         viewModelScope.launch(Dispatchers.IO) {
             val result = Json.decodeFromString<TestAPIJSON>(json)
 
@@ -38,9 +38,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             delay(result.second.toLong() * 1000)
 
             if (result.bool) {
-                sendWebViewResponse(ok = true, data = TestAPIJSONResponse(true, "trueString~~"))
+                sendWebViewResponse(uuid = uuid, ok = true, data = TestAPIJSONResponse(true, "trueString~~"))
             } else {
-                sendWebViewResponse<Unit>(ok = false, message = "falseMessage~~~~~")
+                sendWebViewResponse<Unit>(uuid = uuid, ok = false, message = "falseMessage~~~~~")
             }
             withContext(Dispatchers.Main) {
                 Toast.makeText(
@@ -55,9 +55,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private inline fun <reified T> sendWebViewResponse(
         ok: Boolean,
         data: T? = null,
-        message: String? = null
+        message: String? = null,
+        uuid: String? = null
     ) {
-        val response = Json.encodeToString(WebViewResponse(ok, data, message))
+        val response = if(uuid.isNullOrBlank()){
+            Json.encodeToString(WebViewResponse(ok, data, message))
+        } else {
+            Json.encodeToString(WebViewResponseUUID(uuid, WebViewResponse(ok, data, message)))
+        }
+
         webViewControl = WebViewControl.JavaScript(response)
     }
 }
@@ -70,6 +76,10 @@ sealed class WebViewControl {
     data class JavaScript(val response: String) : WebViewControl()
     object NewCookie : WebViewControl()
 }
+
+// UUID TEST
+@Serializable
+data class WebViewResponseUUID<T>(val UUID: String, val json: WebViewResponse<T>)
 
 @Serializable
 data class WebViewResponse<T>(val ok: Boolean, val data: T? = null, val message: String? = null)

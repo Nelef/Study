@@ -43,8 +43,6 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProvider
 import com.uyeong.featuredev.ui.theme.FeatureDevTheme
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
 
 
 class MainActivity : ComponentActivity() {
@@ -245,8 +243,9 @@ class MainActivity : ComponentActivity() {
         }
 
         @JavascriptInterface
-        fun testAPI(json: String) {
-            viewModel.testAPI(json)
+        fun testAPI(uuid: String, json: String) {
+            Log.d("uuid TEST", "uuid: $uuid, json: $json")
+            viewModel.testAPI(uuid, json)
         }
     }
 
