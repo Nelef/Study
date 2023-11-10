@@ -1,12 +1,15 @@
 package com.uyeong.featuredev
 
+import android.app.AlertDialog
 import android.app.Application
 import android.content.Context
+import android.content.DialogInterface
 import android.widget.Toast
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -23,6 +26,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val contactsExtraction = ContactsExtraction(context)
     var webViewControl by mutableStateOf<WebViewControl>(WebViewControl.None)
     var url by mutableStateOf("http://61.109.169.166:9001/")
+
+    val showDialogLiveData = MutableLiveData<String>()
+
+    fun showAlertDialog(json: String) {
+        // LiveData에 데이터를 설정하여 액티비티 또는 프래그먼트에 알립니다.
+        showDialogLiveData.postValue(json)
+    }
 
     fun exportContactsToJSONAndVcf() {
         val contactsJSON = contactsExtraction.exportContactsToVcf()
@@ -42,13 +52,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             } else {
                 sendWebViewResponse<Unit>(ok = false, message = "falseMessage~~~~~")
             }
-            withContext(Dispatchers.Main) {
-                Toast.makeText(
-                    context,
-                    "testAPI 함수 호출 완료 / ${result.second}초 경과 / ${result.bool}",
-                    Toast.LENGTH_LONG
-                ).show()
-            }
+            showDialogLiveData.postValue("testAPI 함수 호출 완료 / ${result.second}초 경과 / ${result.bool}")
         }
     }
 

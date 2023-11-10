@@ -1,6 +1,7 @@
 package com.uyeong.featuredev
 
 import android.Manifest
+import android.app.AlertDialog
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
@@ -41,6 +42,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import com.uyeong.featuredev.ui.theme.FeatureDevTheme
 import kotlinx.serialization.encodeToString
@@ -60,6 +62,10 @@ class MainActivity : ComponentActivity() {
 
         // ViewModel 초기화
         viewModel = ViewModelProvider(this).get(MainViewModel::class.java)
+
+        viewModel.showDialogLiveData.observe(this, Observer { json ->
+            showAlertDialog(json)
+        })
 
         setContent {
             FeatureDevTheme {
@@ -141,6 +147,9 @@ class MainActivity : ComponentActivity() {
                     Spacer(modifier = Modifier.height(10.dp))
                     Button(onClick = { onClick() }) {
                         Text(text = "주소록 획득")
+                    }
+                    Button(onClick = { viewModel.showAlertDialog("test") }) {
+                        Text(text = "다이얼로그 호출")
                     }
                 }
             }
@@ -237,17 +246,41 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    private fun showAlertDialog(json: String) {
+        val alertDialogBuilder = AlertDialog.Builder(this)
+        alertDialogBuilder.setTitle("알림")
+        alertDialogBuilder.setMessage("안드로이드 다이얼로그 예제입니다.\n$json")
+        alertDialogBuilder.setPositiveButton("확인") { dialog, _ ->
+            // 확인 버튼을 눌렀을 때 수행할 동작을 여기에 작성하세요.
+            dialog.dismiss()
+        }
+
+        // 다이얼로그 표시
+        val alertDialog = alertDialogBuilder.create()
+        alertDialog.show()
+    }
+
     inner class WebInterface {
 
+        // 테스트 API
+        @JavascriptInterface
+        fun testAPI(json: String) {
+            viewModel.testAPI(json)
+        }
+
+        // 다이얼로그 호출
+        @JavascriptInterface
+        fun showAlertDialog(json: String) {
+            Log.d("showAlertDialog", "showAlertDialog 호출 $json")
+            viewModel.showAlertDialog(json)
+        }
+
+        // 주소록 호출
         @JavascriptInterface
         fun contactsExtraction() {
             viewModel.exportContactsToJSONAndVcf()
         }
 
-        @JavascriptInterface
-        fun testAPI(json: String) {
-            viewModel.testAPI(json)
-        }
     }
 
     @Preview(showBackground = true)
