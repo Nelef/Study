@@ -42,11 +42,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import com.uyeong.featuredev.ui.theme.FeatureDevTheme
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
 
 
 class MainActivity : ComponentActivity() {
@@ -63,9 +60,7 @@ class MainActivity : ComponentActivity() {
         // ViewModel 초기화
         viewModel = ViewModelProvider(this).get(MainViewModel::class.java)
 
-        viewModel.showDialogLiveData.observe(this, Observer { json ->
-            showAlertDialog(json)
-        })
+        viewModel.showDialogLiveData.observe(this) { json -> showAlertDialog(json) }
 
         setContent {
             FeatureDevTheme {
@@ -73,16 +68,8 @@ class MainActivity : ComponentActivity() {
                 Surface(
                     modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background
                 ) {
-                    TestWeb(viewModel.url) { newUrl ->
-                        viewModel.url = newUrl
-                    }
-                    TestUI {
-                        if (hasContactsPermission()) {
-                            viewModel.exportContactsToJSONAndVcf()
-                        } else {
-                            requestContactsPermission()
-                        }
-                    }
+                    TestWeb(viewModel.url) { newUrl -> viewModel.url = newUrl }
+                    TestUI()
                 }
             }
         }
@@ -95,9 +82,21 @@ class MainActivity : ComponentActivity() {
         ) == PackageManager.PERMISSION_GRANTED
     }
 
+    private fun hasCameraPermission(): Boolean {
+        return ContextCompat.checkSelfPermission(
+            this, Manifest.permission.CAMERA
+        ) == PackageManager.PERMISSION_GRANTED
+    }
+
     private fun requestContactsPermission() {
         ActivityCompat.requestPermissions(
             this, arrayOf(Manifest.permission.READ_CONTACTS), PERMISSION_REQUEST_CODE
+        )
+    }
+
+    private fun requestCameraPermission() {
+        ActivityCompat.requestPermissions(
+            this, arrayOf(Manifest.permission.CAMERA), PERMISSION_REQUEST_CODE
         )
     }
 
@@ -106,7 +105,11 @@ class MainActivity : ComponentActivity() {
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == PERMISSION_REQUEST_CODE && grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            viewModel.exportContactsToJSONAndVcf()
+            if (hasContactsPermission()) {
+                viewModel.exportContactsToJSONAndVcf()
+            } else {
+                requestContactsPermission()
+            }
         } else {
             Toast.makeText(this, "권한이 필요합니다.", Toast.LENGTH_SHORT).show()
         }
@@ -114,7 +117,7 @@ class MainActivity : ComponentActivity() {
 
     // 테스트 버튼
     @Composable
-    fun TestUI(onClick: () -> Unit) {
+    fun TestUI() {
         var onTestButton by remember { mutableStateOf(false) }
 
         Column(
@@ -145,11 +148,27 @@ class MainActivity : ComponentActivity() {
                         Text(text = "▲")
                     }
                     Spacer(modifier = Modifier.height(10.dp))
-                    Button(onClick = { onClick() }) {
+                    Button(onClick = {
+                        if (hasContactsPermission()) {
+                            viewModel.exportContactsToJSONAndVcf()
+                        } else {
+                            requestContactsPermission()
+                        }
+                    }) {
                         Text(text = "주소록 획득")
                     }
                     Button(onClick = { viewModel.showAlertDialog("test") }) {
                         Text(text = "다이얼로그 호출")
+                    }
+                    Button(onClick = {
+                        if (hasCameraPermission()) {
+                            Toast.makeText(baseContext, "카메라 권한 획득 완료.", Toast.LENGTH_SHORT).show()
+                        } else {
+                            Toast.makeText(baseContext, "카메라 권한 획득 요청", Toast.LENGTH_SHORT).show()
+                            requestCameraPermission()
+                        }
+                    }) {
+                        Text(text = "카메라 권한 획득")
                     }
                 }
             }
@@ -278,7 +297,11 @@ class MainActivity : ComponentActivity() {
         // 주소록 호출
         @JavascriptInterface
         fun contactsExtraction() {
-            viewModel.exportContactsToJSONAndVcf()
+            if (hasContactsPermission()) {
+                viewModel.exportContactsToJSONAndVcf()
+            } else {
+                requestContactsPermission()
+            }
         }
 
     }
@@ -288,7 +311,7 @@ class MainActivity : ComponentActivity() {
     fun Preview() {
         FeatureDevTheme {
             Column {
-                TestUI {}
+                TestUI()
             }
         }
     }
