@@ -1,7 +1,7 @@
 openapi: 3.0.0
 
 info:
-  version: "0.0.3"
+  version: "0.0.4"
   description: |
     ## SalesKit Webview에 제공하는 Android/iOS Native 함수 목록
     ***
@@ -88,6 +88,31 @@ paths:
               schema:
                 $ref: '#/components/schemas/ResponseTestAPI400'
 
+  /getCameraPermission:
+    post:
+      tags:
+        - Android API
+      summary: 카메라 권한 획득 호출
+      operationId: getCameraPermission
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RequestGetCameraPermission'
+      responses:
+        '200':
+          description: SUCCESS
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseGetCameraPermission200'
+        '400':
+          description: FAIL
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseGetCameraPermission400'
 
 
 
@@ -185,6 +210,33 @@ components:
         message:
           type: string
           example: "falseMessage~~~~~"
+      required:
+        - ok
+        - message
+
+
+    RequestGetCameraPermission:
+      type: object
+      properties: {}
+
+    ResponseGetCameraPermission200:
+      type: object
+      properties:
+        ok:
+          type: boolean
+          example: true
+          description: API 완료 여부
+      required:
+        - ok
+        - data
+
+    ResponseGetCameraPermission400:
+      type: object
+      properties:
+        ok:
+          type: boolean
+          example: false
+          description: API 완료 여부
       required:
         - ok
         - message
