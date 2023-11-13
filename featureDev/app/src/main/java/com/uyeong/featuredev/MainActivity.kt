@@ -3,10 +3,12 @@ package com.uyeong.featuredev
 import android.Manifest
 import android.app.AlertDialog
 import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.ViewGroup
 import android.webkit.JavascriptInterface
+import android.webkit.PermissionRequest
 import android.webkit.WebChromeClient
 import android.webkit.WebSettings
 import android.webkit.WebView
@@ -14,6 +16,7 @@ import android.webkit.WebViewClient
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -54,6 +57,7 @@ class MainActivity : ComponentActivity() {
         private const val WEB_INTERFACE_NAME = "WebInterface"
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -103,15 +107,15 @@ class MainActivity : ComponentActivity() {
     override fun onRequestPermissionsResult(
         requestCode: Int, permissions: Array<out String>, grantResults: IntArray
     ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == PERMISSION_REQUEST_CODE && grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            if (hasContactsPermission()) {
-                viewModel.exportContactsToJSONAndVcf()
-            } else {
-                requestContactsPermission()
-            }
+//            if (hasContactsPermission()) {
+//                viewModel.exportContactsToJSONAndVcf()
+//            } else {
+//                requestContactsPermission()
+//            }
         } else {
             Toast.makeText(this, "권한이 필요합니다.", Toast.LENGTH_SHORT).show()
+            super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         }
     }
 
@@ -176,6 +180,7 @@ class MainActivity : ComponentActivity() {
     }
 
     // 웹 화면
+    @RequiresApi(Build.VERSION_CODES.O)
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     fun TestWeb(url: String, changeUrl: (newUrl: String) -> Unit) {
@@ -219,10 +224,10 @@ class MainActivity : ComponentActivity() {
                                 WEB_INTERFACE_NAME
                             )
 
-                            webViewClient = WebViewClient()
-
                             webChromeClient = object : WebChromeClient() {
-
+                                override fun onPermissionRequest(request: PermissionRequest) {
+                                    request.grant(request.resources)
+                                }
                                 override fun onProgressChanged(
                                     view: WebView?,
                                     newProgress: Int
@@ -234,8 +239,9 @@ class MainActivity : ComponentActivity() {
                                         viewModel.url = view?.url.toString()
                                     }
                                 }
-
                             }
+                            webViewClient = WebViewClient()
+
                             // url 설정
                             loadUrl(url)
                         }
@@ -301,6 +307,17 @@ class MainActivity : ComponentActivity() {
                 viewModel.exportContactsToJSONAndVcf()
             } else {
                 requestContactsPermission()
+            }
+        }
+
+        // 카메라 권한 호출
+        @JavascriptInterface
+        fun getCameraPermission() {
+            if (hasCameraPermission()) {
+                Toast.makeText(baseContext, "카메라 권한 획득 완료.", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(baseContext, "카메라 권한 획득 요청", Toast.LENGTH_SHORT).show()
+                requestCameraPermission()
             }
         }
 
