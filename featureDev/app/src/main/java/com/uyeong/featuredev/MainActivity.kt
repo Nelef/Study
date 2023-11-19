@@ -50,7 +50,8 @@ import com.uyeong.featuredev.ui.theme.FeatureDevTheme
 
 
 class MainActivity : ComponentActivity() {
-    private val PERMISSION_REQUEST_CODE = 100
+    private val CONTACTS_PERMISSION_REQUEST_CODE = 101
+    private val CAMERA_PERMISSION_REQUEST_CODE = 102
     private lateinit var viewModel: MainViewModel
 
     companion object {
@@ -94,25 +95,38 @@ class MainActivity : ComponentActivity() {
 
     private fun requestContactsPermission() {
         ActivityCompat.requestPermissions(
-            this, arrayOf(Manifest.permission.READ_CONTACTS), PERMISSION_REQUEST_CODE
+            this, arrayOf(Manifest.permission.READ_CONTACTS), CONTACTS_PERMISSION_REQUEST_CODE
         )
     }
 
     private fun requestCameraPermission() {
         ActivityCompat.requestPermissions(
-            this, arrayOf(Manifest.permission.CAMERA), PERMISSION_REQUEST_CODE
+            this, arrayOf(Manifest.permission.CAMERA), CAMERA_PERMISSION_REQUEST_CODE
         )
     }
 
+    // 퍼미션 요청 완료 후 하는 일
     override fun onRequestPermissionsResult(
         requestCode: Int, permissions: Array<out String>, grantResults: IntArray
     ) {
-        if (requestCode == PERMISSION_REQUEST_CODE && grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-//            if (hasContactsPermission()) {
-//                viewModel.exportContactsToJSONAndVcf()
-//            } else {
-//                requestContactsPermission()
-//            }
+        if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            // 주소록 권한 요청 후
+            if (requestCode == CONTACTS_PERMISSION_REQUEST_CODE) {
+                if (hasContactsPermission()) {
+                    viewModel.exportContactsToJSONAndVcf()
+                } else {
+                    requestContactsPermission()
+                }
+            }
+            // 카메라 권한 요청 후
+            if (requestCode == CAMERA_PERMISSION_REQUEST_CODE) {
+                if (hasCameraPermission()) {
+                    Toast.makeText(baseContext, "카메라 권한 획득 완료.", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(baseContext, "카메라 권한 획득 요청", Toast.LENGTH_SHORT).show()
+                    requestCameraPermission()
+                }
+            }
         } else {
             Toast.makeText(this, "권한이 필요합니다.", Toast.LENGTH_SHORT).show()
             super.onRequestPermissionsResult(requestCode, permissions, grantResults)
@@ -228,6 +242,7 @@ class MainActivity : ComponentActivity() {
                                 override fun onPermissionRequest(request: PermissionRequest) {
                                     request.grant(request.resources)
                                 }
+
                                 override fun onProgressChanged(
                                     view: WebView?,
                                     newProgress: Int
@@ -302,7 +317,7 @@ class MainActivity : ComponentActivity() {
 
         // 주소록 호출
         @JavascriptInterface
-        fun contactsExtraction() {
+        fun contactsExtraction(json: String) {
             if (hasContactsPermission()) {
                 viewModel.exportContactsToJSONAndVcf()
             } else {
@@ -312,7 +327,7 @@ class MainActivity : ComponentActivity() {
 
         // 카메라 권한 호출
         @JavascriptInterface
-        fun getCameraPermission() {
+        fun getCameraPermission(json: String) {
             if (hasCameraPermission()) {
                 Toast.makeText(baseContext, "카메라 권한 획득 완료.", Toast.LENGTH_SHORT).show()
             } else {
