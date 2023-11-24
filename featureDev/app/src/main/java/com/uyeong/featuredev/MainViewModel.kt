@@ -2,6 +2,8 @@ package com.uyeong.featuredev
 
 import android.app.Application
 import android.content.Context
+import android.content.pm.PackageManager
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -21,9 +23,11 @@ val AndroidViewModel.context: Context
 class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val contactsExtraction = ContactsExtraction(context)
     var webViewControl by mutableStateOf<WebViewControl>(WebViewControl.None)
-//    var url by mutableStateOf("http://61.109.169.166:9001/") // 장우영
+
+    var url by mutableStateOf("http://61.109.169.166:9001/") // 장우영
+//    var url by mutableStateOf("http://61.109.169.126:9001/") // 신영난
 //    var url by mutableStateOf("http://61.109.169.171:9001/") // 최영수
-    var url by mutableStateOf("http://61.109.146.195:9001/") // 강민우
+//    var url by mutableStateOf("http://61.109.146.195:9001/") // 강민우
 
     val showDialogLiveData = MutableLiveData<String>()
 
@@ -54,6 +58,16 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun getAppVersion() {
+        try {
+            val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
+            sendWebViewResponse(ok = true, data = AppVersion(os = "android", version = packageInfo.versionName))
+        } catch (e: PackageManager.NameNotFoundException) {
+            Log.e("getAppVersion", e.toString())
+            sendWebViewResponse<Unit>(ok = false, message = "android 앱 버전 불러오기 실패")
+        }
+    }
+
     private inline fun <reified T> sendWebViewResponse(
         ok: Boolean,
         data: T? = null,
@@ -81,3 +95,6 @@ data class TestAPIJSON(val bool: Boolean, val second: Int = 0)
 
 @Serializable
 data class TestAPIJSONResponse(val test1: Boolean, val test2: String)
+
+@Serializable
+data class AppVersion(val os: String, val version: String)

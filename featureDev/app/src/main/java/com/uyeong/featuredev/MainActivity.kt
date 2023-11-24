@@ -397,6 +397,10 @@ class MainActivity : ComponentActivity() {
             }
         }
 
+        @JavascriptInterface
+        fun getAppVersion(json: String) {
+            viewModel.getAppVersion()
+        }
     }
 
     @Preview(showBackground = true)
