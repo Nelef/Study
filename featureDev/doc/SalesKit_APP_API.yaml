@@ -1,7 +1,7 @@
-openapi: 3.0.0
+openapi: 3.0.3
 
 info:
-  version: "0.0.4"
+  version: "0.0.5"
   description: |
     ## SalesKit Webview에 제공하는 Android/iOS Native 함수 목록
     ***
@@ -10,8 +10,9 @@ info:
       - ```saleskit_android_app```
       - ```saleskit_ios_app```
     ## web(js)에서 호출법
-    - Android: ```window.WebInterface.함수이름();```
-    - iOS: ```window.webkit.messageHandlers.함수이름.postMessage();```
+    - Android: ```window.WebInterface.함수이름( JSON.stringify(Object) );```
+    
+    - iOS: ```window.webkit.messageHandlers.함수이름.postMessage( JSON.stringify(Object) );```
     ## web(js)에서 응답받기
     - Android, iOS: ```responseNative(Object)```
       ### 성공 Object 예시 (ok: Boolean, data: Object?)
@@ -42,32 +43,18 @@ info:
 
 paths:
 
-  /contactsExtraction:
-    post:
-      tags:
-        - Android API
-      summary: 주소록 추출 호출
-      operationId: contactsExtraction
-      responses:
-        '200':
-          description: SUCCESS
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ResponseContactsExtraction200'
-        '400':
-          description: FAIL
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ResponseContactsExtraction400'
-
   /testAPI:
     post:
       tags:
-        - Android API
+        - 공통 API
       summary: 테스트 API 호출
       operationId: testAPI
+      description: 사용법 - testAPI( { true, 2 } )  =>  2초 후에 참 호출됨
+      parameters:
+        - name: json
+          in: object
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -88,18 +75,58 @@ paths:
               schema:
                 $ref: '#/components/schemas/ResponseTestAPI400'
 
-  /getCameraPermission:
+  /contactsExtraction:
     post:
       tags:
-        - Android API
-      summary: 카메라 권한 획득 호출
-      operationId: getCameraPermission
+        - 공통 API
+      summary: 주소록 추출 호출
+      operationId: contactsExtraction
+      description: 사용법 - contactsExtraction( { } )  =>  주소록 추출 호출 됨.
+      parameters:
+        - name: json
+          in: object
+          schema:
+            type: string
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RequestGetCameraPermission'
+              type: object
+              properties: {}
+      responses:
+        '200':
+          description: SUCCESS
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseContactsExtraction200'
+        '400':
+          description: FAIL
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseContactsExtraction400'
+
+  /getCameraPermission:
+    post:
+      tags:
+        - 공통 API
+      summary: 카메라 권한 획득 호출
+      operationId: getCameraPermission
+      description: 사용법 - getCameraPermission( { } )  =>  카메라 권한 획득 호출 됨.
+      parameters:
+        - name: json
+          in: object
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: {}
       responses:
         '200':
           description: SUCCESS
@@ -113,6 +140,39 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ResponseGetCameraPermission400'
+
+  /getAppVersion:
+    post:
+      tags:
+        - 공통 API
+      summary: 앱 버전 호출
+      operationId: getAppVersion
+      description: 사용법 - getAppVersion( { } )  =>  앱 버전 호출 됨.
+      parameters:
+        - name: json
+          in: object
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: {}
+      responses:
+        '200':
+          description: SUCCESS
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseGetAppVersion200'
+        '400':
+          description: FAIL
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseGetAppVersion400'
 
 
 
@@ -148,7 +208,6 @@ components:
       required:
         - ok
 
-
     ResponseContactsExtraction400:
       type: object
       properties:
@@ -161,6 +220,7 @@ components:
           example: "process failed"
       required:
         - ok
+
 
     RequestTestAPI:
       type: object
@@ -175,7 +235,6 @@ components:
           description: 숫자 값
       required:
         - bool
-
 
     ResponseTestAPI200:
       type: object
@@ -215,10 +274,6 @@ components:
         - message
 
 
-    RequestGetCameraPermission:
-      type: object
-      properties: {}
-
     ResponseGetCameraPermission200:
       type: object
       properties:
@@ -231,6 +286,41 @@ components:
         - data
 
     ResponseGetCameraPermission400:
+      type: object
+      properties:
+        ok:
+          type: boolean
+          example: false
+          description: API 완료 여부
+      required:
+        - ok
+        - message
+
+
+    ResponseGetAppVersion200:
+      type: object
+      properties:
+        ok:
+          type: boolean
+          example: true
+          description: API 완료 여부
+        data:
+          type: object
+          properties:
+            os:
+              type: string
+              example: "android"
+              description: 앱 os
+            version:
+              type: string
+              example: "0.0.1"
+              description: 앱 버전
+          description: 데이터
+      required:
+        - ok
+        - data
+
+    ResponseGetAppVersion400:
       type: object
       properties:
         ok:
