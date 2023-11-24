@@ -2,13 +2,16 @@ package com.uyeong.featuredev
 
 import android.Manifest
 import android.app.AlertDialog
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.ViewGroup
 import android.webkit.JavascriptInterface
 import android.webkit.PermissionRequest
+import android.webkit.ValueCallback
 import android.webkit.WebChromeClient
 import android.webkit.WebSettings
 import android.webkit.WebView
@@ -16,7 +19,11 @@ import android.webkit.WebViewClient
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.result.ActivityResult
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
+import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -52,7 +59,12 @@ import com.uyeong.featuredev.ui.theme.FeatureDevTheme
 class MainActivity : ComponentActivity() {
     private val CONTACTS_PERMISSION_REQUEST_CODE = 101
     private val CAMERA_PERMISSION_REQUEST_CODE = 102
+    private val STORAGE_PERMISSION_REQUEST_CODE = 103
     private lateinit var viewModel: MainViewModel
+
+    // 파일 업로드
+    private var uploadMessage: ValueCallback<Array<Uri>>? = null
+    private lateinit var contentActivityResultLauncher: ActivityResultLauncher<Intent>
 
     companion object {
         private const val WEB_INTERFACE_NAME = "WebInterface"
@@ -79,6 +91,23 @@ class MainActivity : ComponentActivity() {
             }
         }
 
+        // WebView 파일 업로드와 관련된 초기 설정 코드
+        contentActivityResultLauncher = registerForActivityResult(
+            ActivityResultContracts.StartActivityForResult()
+        ) { result: ActivityResult ->
+            if (result.resultCode == AppCompatActivity.RESULT_OK && result.data != null) {
+                uploadMessage?.onReceiveValue(
+                    WebChromeClient.FileChooserParams.parseResult(
+                        result.resultCode,
+                        result.data
+                    )
+                )
+            } else {
+                uploadMessage?.onReceiveValue(null)
+            }
+            uploadMessage = null
+        }
+
     }
 
     private fun hasContactsPermission(): Boolean {
@@ -93,6 +122,12 @@ class MainActivity : ComponentActivity() {
         ) == PackageManager.PERMISSION_GRANTED
     }
 
+    private fun hasStoragePermission(): Boolean {
+        return ContextCompat.checkSelfPermission(
+            this, Manifest.permission.WRITE_EXTERNAL_STORAGE
+        ) == PackageManager.PERMISSION_GRANTED
+    }
+
     private fun requestContactsPermission() {
         ActivityCompat.requestPermissions(
             this, arrayOf(Manifest.permission.READ_CONTACTS), CONTACTS_PERMISSION_REQUEST_CODE
@@ -102,6 +137,14 @@ class MainActivity : ComponentActivity() {
     private fun requestCameraPermission() {
         ActivityCompat.requestPermissions(
             this, arrayOf(Manifest.permission.CAMERA), CAMERA_PERMISSION_REQUEST_CODE
+        )
+    }
+
+    private fun requestStoragePermission() {
+        ActivityCompat.requestPermissions(
+            this,
+            arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE),
+            STORAGE_PERMISSION_REQUEST_CODE
         )
     }
 
@@ -241,6 +284,24 @@ class MainActivity : ComponentActivity() {
                             webChromeClient = object : WebChromeClient() {
                                 override fun onPermissionRequest(request: PermissionRequest) {
                                     request.grant(request.resources)
+                                }
+
+                                // 파일 선택 핸들러
+                                override fun onShowFileChooser(
+                                    webView: WebView?,
+                                    filePathCallback: ValueCallback<Array<Uri>>,
+                                    fileChooserParams: FileChooserParams
+                                ): Boolean {
+                                    uploadMessage?.onReceiveValue(null)
+                                    uploadMessage = filePathCallback
+
+                                    val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
+                                        addCategory(Intent.CATEGORY_OPENABLE)
+                                        type = "image/*"
+                                    }
+
+                                    contentActivityResultLauncher.launch(intent)
+                                    return true
                                 }
 
                                 override fun onProgressChanged(

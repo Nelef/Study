@@ -21,7 +21,9 @@ val AndroidViewModel.context: Context
 class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val contactsExtraction = ContactsExtraction(context)
     var webViewControl by mutableStateOf<WebViewControl>(WebViewControl.None)
-    var url by mutableStateOf("http://61.109.169.166:9001/")
+//    var url by mutableStateOf("http://61.109.169.166:9001/") // 장우영
+//    var url by mutableStateOf("http://61.109.169.171:9001/") // 최영수
+    var url by mutableStateOf("http://61.109.146.195:9001/") // 강민우
 
     val showDialogLiveData = MutableLiveData<String>()
 
